@@ -1,15 +1,27 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Static hosting for guitars-webapp: a private S3 bucket fronted by a
-  CloudFront distribution that uses Origin Access Control and a CloudFront
-  Function to rewrite client-side routes to /index.html so SPA deep links
-  resolve correctly on refresh.
+  Static hosting for guitars-webapp: a public S3 bucket fronted by CloudFront
+  at guitarcollection.brouwers.club. A CloudFront Function rewrites SPA routes
+  to /index.html so deep links resolve on refresh.
 
 Parameters:
   BucketName:
     Type: String
     Description: Globally unique name for the static-site bucket.
+  SiteDomainName:
+    Type: String
+    Default: guitarcollection.brouwers.club
+    Description: Custom domain served by CloudFront.
+  HostedZoneId:
+    Type: String
+    Default: Z0268167UNCHL7FC13KG
+    Description: Route53 hosted zone ID for the site domain.
+  AcmCertificateArn:
+    Type: String
+    Description: >
+      ACM certificate ARN for SiteDomainName in us-east-1 (required by
+      CloudFront).
 
 Resources:
   SiteBucket:
@@ -17,13 +29,16 @@ Resources:
     Properties:
       BucketName: !Ref BucketName
       PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
       OwnershipControls:
         Rules:
-          - ObjectOwnership: BucketOwnerEnforced
+          - ObjectOwnership: BucketOwnerPreferred
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -31,14 +46,18 @@ Resources:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
 
-  SiteOriginAccessControl:
-    Type: AWS::CloudFront::OriginAccessControl
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      OriginAccessControlConfig:
-        Name: !Sub '${AWS::StackName}-oac'
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${SiteBucket}/*'
 
   SpaRouterFunction:
     Type: AWS::CloudFront::Function
@@ -65,23 +84,28 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-        Comment: !Sub 'guitars-webapp (${AWS::StackName})'
+        Comment: !Sub 'guitars-webapp (${SiteDomainName})'
         DefaultRootObject: index.html
         HttpVersion: http2
         PriceClass: PriceClass_100
+        Aliases:
+          - !Ref SiteDomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
         Origins:
           - Id: SiteBucketOrigin
             DomainName: !GetAtt SiteBucket.RegionalDomainName
             S3OriginConfig:
               OriginAccessIdentity: ''
-            OriginAccessControlId: !GetAtt SiteOriginAccessControl.Id
         DefaultCacheBehavior:
           TargetOriginId: SiteBucketOrigin
           ViewerProtocolPolicy: redirect-to-https
           AllowedMethods: [GET, HEAD, OPTIONS]
           CachedMethods: [GET, HEAD]
           Compress: true
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt SpaRouterFunction.FunctionARN
@@ -93,26 +117,29 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
 
-  SiteBucketPolicy:
-    Type: AWS::S3::BucketPolicy
+  SiteDnsRecord:
+    Type: AWS::Route53::RecordSet
     Properties:
-      Bucket: !Ref SiteBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: AllowCloudFrontServicePrincipalReadOnly
-            Effect: Allow
-            Principal:
-              Service: cloudfront.amazonaws.com
-            Action: s3:GetObject
-            Resource: !Sub 'arn:aws:s3:::${SiteBucket}/*'
-            Condition:
-              StringEquals:
-                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteDistribution}'
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref SiteDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt SiteDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+  SiteDnsRecordIPv6:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref SiteDomainName
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt SiteDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
 
 Outputs:
   BucketName:
-    Description: Name of the S3 bucket holding the built site.
+    Description: Name of the public S3 bucket holding the built site.
     Value: !Ref SiteBucket
     Export:
       Name: !Sub '${AWS::StackName}-BucketName'
@@ -122,7 +149,13 @@ Outputs:
     Export:
       Name: !Sub '${AWS::StackName}-DistributionId'
   DistributionDomain:
-    Description: Public domain of the CloudFront distribution.
+    Description: CloudFront distribution domain name.
     Value: !GetAtt SiteDistribution.DomainName
     Export:
       Name: !Sub '${AWS::StackName}-DistributionDomain'
+  SiteUrl:
+    Description: Public URL for the guitars webapp.
+    Value: !Sub 'https://${SiteDomainName}/'
+  SiteDomainName:
+    Description: Custom domain attached to CloudFront.
+    Value: !Ref SiteDomainName
