@@ -45,6 +45,16 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, HEAD]
+            AllowedOrigins:
+              - https://guitarcollection.brouwers.club
+              - http://localhost:5173
+              - http://127.0.0.1:5173
+            ExposedHeaders: [ETag]
+            MaxAge: 3600
 
   SiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -71,6 +81,9 @@ Resources:
         function handler(event) {
           var request = event.request;
           var uri = request.uri;
+          if (uri.indexOf('/images/') === 0) {
+            return request;
+          }
           if (uri.endsWith('/')) {
             request.uri = '/index.html';
           } else if (!uri.split('/').pop().includes('.')) {

@@ -1,9 +1,21 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GuitarForm } from './GuitarForm';
 
+vi.mock('@/api/uploads', () => ({
+  uploadPicture: vi.fn(),
+  validatePictureFile: vi.fn(() => null),
+}));
+
+import { uploadPicture } from '@/api/uploads';
+
 describe('<GuitarForm />', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(uploadPicture).mockResolvedValue('https://cdn.example/images/guitars/a.jpg');
+  });
+
   it('fills the form and calls onSubmit with API-shaped values (price in minor units)', async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
@@ -20,11 +32,10 @@ describe('<GuitarForm />', () => {
     await user.type(screen.getByLabelText(/serial number/i), 'SN-1234');
     await user.type(screen.getByLabelText(/^price$/i), '1999.00');
 
-    await user.type(
-      screen.getByLabelText(/add picture url/i),
-      'https://example.com/strat.jpg',
-    );
-    await user.click(screen.getByRole('button', { name: /add picture url/i }));
+    const file = new File(['x'], 'strat.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/upload pictures/i), file);
+
+    await waitFor(() => expect(uploadPicture).toHaveBeenCalledWith(file));
 
     await user.type(screen.getByLabelText(/description/i), 'A fine guitar.');
 
@@ -37,7 +48,7 @@ describe('<GuitarForm />', () => {
       buildYear: 1996,
       priceAmount: 199900,
       priceCurrency: 'EUR',
-      pictures: ['https://example.com/strat.jpg'],
+      pictures: ['https://cdn.example/images/guitars/a.jpg'],
       serialNumber: 'SN-1234',
       description: 'A fine guitar.',
     });

@@ -30,7 +30,7 @@ build:
 
 deploy:
 	@if [ -z "$(BUCKET)" ]; then echo "BUCKET is required"; exit 1; fi
-	aws s3 sync dist/ s3://$(BUCKET) --delete
+	aws s3 sync dist/ s3://$(BUCKET) --delete --exclude "images/*"
 
 invalidate:
 	@if [ -z "$(DIST)" ]; then echo "DIST is required"; exit 1; fi

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,6 +7,7 @@ import {
   guitarInputSchema,
   type GuitarInput,
 } from '@/domain/guitar';
+import { uploadPicture, validatePictureFile } from '@/api/uploads';
 import { MoneyInput } from './MoneyInput';
 
 export interface GuitarFormProps {
@@ -65,7 +66,9 @@ export const GuitarForm = ({
   submitLabel = 'Save',
   serverError,
 }: GuitarFormProps) => {
-  const [newPicture, setNewPicture] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadingCount, setUploadingCount] = useState(0);
 
   const {
     register,
@@ -80,16 +83,39 @@ export const GuitarForm = ({
 
   const { fields, append, remove } = useFieldArray({ control, name: 'pictures' });
 
-  const addPictureUrl = () => {
-    const trimmed = newPicture.trim();
-    if (trimmed === '') return;
-    append({ url: trimmed });
-    setNewPicture('');
+  const handleFilesSelected = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadError(null);
+
+    for (const file of Array.from(files)) {
+      const validationError = validatePictureFile(file);
+      if (validationError) {
+        setUploadError(validationError);
+        continue;
+      }
+
+      setUploadingCount((count) => count + 1);
+      try {
+        const publicUrl = await uploadPicture(file);
+        append({ url: publicUrl });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Upload failed';
+        setUploadError(message);
+      } finally {
+        setUploadingCount((count) => count - 1);
+      }
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const submit = handleSubmit(async (values) => {
     await onSubmit(values);
   });
+
+  const isUploading = uploadingCount > 0;
 
   return (
     <form onSubmit={submit} className="space-y-5" noValidate>
@@ -205,23 +231,25 @@ export const GuitarForm = ({
       </div>
 
       <fieldset>
-        <legend className="label">Picture URLs</legend>
+        <legend className="label">Pictures</legend>
         {fields.length === 0 ? (
-          <p className="help">No pictures added yet.</p>
+          <p className="help">No pictures uploaded yet.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {fields.map((field, index) => (
-              <li key={field.id} className="flex items-center gap-2">
-                <input
-                  className="input"
-                  aria-label={`Picture URL ${index + 1}`}
-                  aria-invalid={Boolean(errors.pictures?.[index])}
-                  {...register(`pictures.${index}.url` as const)}
+              <li
+                key={field.id}
+                className="relative aspect-square overflow-hidden rounded-md border border-slate-200 bg-white"
+              >
+                <img
+                  src={field.url}
+                  alt={`Uploaded picture ${index + 1}`}
+                  className="h-full w-full object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className="btn-secondary"
+                  className="absolute right-1 top-1 rounded-md bg-white/90 px-2 py-0.5 text-xs font-medium text-slate-900 hover:bg-white"
                 >
                   Remove
                 </button>
@@ -232,18 +260,27 @@ export const GuitarForm = ({
         {errors.pictures && !Array.isArray(errors.pictures) ? (
           <p className="error-text">{(errors.pictures as { message?: string }).message}</p>
         ) : null}
+        {uploadError ? <p className="error-text">{uploadError}</p> : null}
         <div className="mt-3 flex items-center gap-2">
           <input
-            type="url"
-            placeholder="https://example.com/image.jpg"
-            className="input"
-            value={newPicture}
-            onChange={(e) => setNewPicture(e.target.value)}
-            aria-label="Add picture URL"
+            ref={fileInputRef}
+            id="picture-upload"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            className="sr-only"
+            aria-label="Upload pictures"
+            onChange={(e) => void handleFilesSelected(e.target.files)}
           />
-          <button type="button" onClick={addPictureUrl} className="btn-secondary">
-            Add picture URL
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="btn-secondary"
+            disabled={isUploading}
+          >
+            {isUploading ? 'Uploading…' : 'Upload pictures'}
           </button>
+          <p className="help">JPEG, PNG, WebP, or GIF up to 5 MB each.</p>
         </div>
       </fieldset>
 
@@ -263,7 +300,11 @@ export const GuitarForm = ({
             Cancel
           </button>
         ) : null}
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={submitting || isUploading}
+        >
           {submitting ? 'Saving…' : submitLabel}
         </button>
       </div>

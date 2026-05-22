@@ -48,7 +48,7 @@ jobs:
       - name: Sync to S3
         env:
           BUCKET: ${{ vars.GUITARS_BUCKET }}
-        run: aws s3 sync dist/ "s3://${BUCKET}" --delete
+        run: aws s3 sync dist/ "s3://${BUCKET}" --delete --exclude "images/*"
 
       - name: Invalidate CloudFront
         env:
