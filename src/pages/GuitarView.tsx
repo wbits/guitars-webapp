@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDeleteGuitar, useGuitar } from '@/api/guitars';
+import { useMarketLogs } from '@/api/marketLogs';
 import { ErrorBanner } from '@/components/ErrorBanner';
+import { MarketLogList } from '@/components/MarketLogList';
 import { PictureGallery } from '@/components/PictureGallery';
 import { formatMoney } from '@/lib/money';
 
@@ -9,6 +11,7 @@ export const GuitarView = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const guitar = useGuitar(id);
+  const marketLogs = useMarketLogs(id);
   const del = useDeleteGuitar();
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<unknown>(null);
@@ -86,6 +89,17 @@ export const GuitarView = () => {
       <div>
         <h2 className="mb-2 text-sm font-semibold text-slate-700">Pictures</h2>
         <PictureGallery pictures={g.pictures} />
+      </div>
+
+      <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">Marketplace prices</h2>
+        {marketLogs.isLoading ? (
+          <p className="text-sm text-slate-600">Loading market observations…</p>
+        ) : marketLogs.isError ? (
+          <ErrorBanner error={marketLogs.error} title="Could not load market prices" />
+        ) : (
+          <MarketLogList logs={marketLogs.data ?? []} />
+        )}
       </div>
 
       {confirming ? (
