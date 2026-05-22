@@ -55,4 +55,14 @@ describe('token resolution', () => {
     setRuntimeToken('   ');
     expect(getToken()).toBeNull();
   });
+
+  it('ignores build-time token when Cognito is configured', async () => {
+    vi.stubEnv(ENV_KEY, 'build-time-token');
+    vi.stubEnv('VITE_COGNITO_REGION', 'eu-central-1');
+    vi.stubEnv('VITE_COGNITO_USER_POOL_ID', 'eu-central-1_ABC123');
+    vi.stubEnv('VITE_COGNITO_CLIENT_ID', 'client-id');
+    const { getToken, hasToken } = await reload();
+    expect(getToken()).toBeNull();
+    expect(hasToken()).toBe(false);
+  });
 });

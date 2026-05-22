@@ -1,4 +1,5 @@
 import { ApiError, MissingTokenError } from '@/api/client';
+import { isCognitoEnabled } from '@/lib/cognito-config';
 import { Link } from 'react-router-dom';
 
 interface ErrorBannerProps {
@@ -7,11 +8,16 @@ interface ErrorBannerProps {
 }
 
 const describe = (error: unknown): string => {
+  const cognito = isCognitoEnabled();
   if (error instanceof MissingTokenError) {
-    return 'No bearer token configured.';
+    return cognito ? 'Sign in is required to access the API.' : 'No bearer token configured.';
   }
   if (error instanceof ApiError) {
-    if (error.status === 401) return 'The configured bearer token was rejected.';
+    if (error.status === 401) {
+      return cognito
+        ? 'Your sign-in session was rejected. Sign in again.'
+        : 'The configured bearer token was rejected.';
+    }
     if (error.status === 404) return 'The requested guitar could not be found.';
     return error.message;
   }
@@ -23,9 +29,15 @@ const describe = (error: unknown): string => {
 export const ErrorBanner = ({ error, title }: ErrorBannerProps) => {
   if (!error) return null;
   const message = describe(error);
+  const cognito = isCognitoEnabled();
   const showTokenLink =
-    error instanceof MissingTokenError ||
-    (error instanceof ApiError && error.status === 401);
+    !cognito &&
+    (error instanceof MissingTokenError ||
+      (error instanceof ApiError && error.status === 401));
+  const showSignInLink =
+    cognito &&
+    (error instanceof MissingTokenError ||
+      (error instanceof ApiError && error.status === 401));
 
   return (
     <div
@@ -38,6 +50,13 @@ export const ErrorBanner = ({ error, title }: ErrorBannerProps) => {
         <p className="mt-2">
           <Link to="/settings" className="font-medium underline">
             Configure a token in settings
+          </Link>
+        </p>
+      ) : null}
+      {showSignInLink ? (
+        <p className="mt-2">
+          <Link to="/login" className="font-medium underline">
+            Sign in
           </Link>
         </p>
       ) : null}

@@ -1,16 +1,14 @@
 /**
  * Bearer-token resolution for the GuitarCollection API.
  *
- * Two complementary sources are supported:
+ * When Cognito is configured, only the runtime session token (set after
+ * sign-in) is used. Otherwise two legacy sources are supported:
  *
- *   1. A build-time value injected via the Vite env var
- *      `VITE_GUITARS_BEARER_TOKEN`. Anything baked into the bundle is public,
- *      so this is only acceptable when the deployment is trusted.
- *
- *   2. A runtime value pasted into the /settings page. It is persisted to
- *      `sessionStorage` (NOT `localStorage`) under `RUNTIME_TOKEN_KEY`, lives
- *      only for the current tab, and wins over the build-time value.
+ *   1. A build-time value injected via `VITE_GUITARS_BEARER_TOKEN`.
+ *   2. A runtime value pasted on /settings, stored in `sessionStorage`.
  */
+
+import { isCognitoEnabled } from '@/lib/cognito-config';
 
 export const RUNTIME_TOKEN_KEY = 'guitars:bearerToken';
 
@@ -57,7 +55,10 @@ export const clearRuntimeToken = (): void => {
 };
 
 export const getToken = (): string | null => {
-  return getRuntimeToken() ?? buildTimeToken();
+  const runtime = getRuntimeToken();
+  if (runtime) return runtime;
+  if (isCognitoEnabled()) return null;
+  return buildTimeToken();
 };
 
 export const hasToken = (): boolean => getToken() !== null;
