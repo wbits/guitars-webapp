@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { refreshSessionToken } from '@/lib/cognito-auth';
+import { isCognitoEnabled } from '@/lib/cognito-config';
 import { hasToken, RUNTIME_TOKEN_KEY } from '@/lib/token';
 
 interface AuthGateProps {
@@ -7,38 +9,83 @@ interface AuthGateProps {
 }
 
 /**
- * Renders children only when a bearer token is configured. Otherwise displays
- * a friendly explanation and a link to /settings. Re-checks on storage events
- * so pasting a token in /settings unblocks the rest of the app immediately.
+ * Renders children only when a bearer token is configured. With Cognito
+ * enabled, restores the session from the user pool on load. Otherwise falls
+ * back to the manual token flow via /settings.
  */
 export const AuthGate = ({ children }: AuthGateProps) => {
-  const [tokenPresent, setTokenPresent] = useState<boolean>(() => hasToken());
+  const cognito = isCognitoEnabled();
+  const [checking, setChecking] = useState(cognito);
+  const [tokenPresent, setTokenPresent] = useState<boolean>(() => !cognito && hasToken());
 
   useEffect(() => {
+    let cancelled = false;
+
     const recheck = () => setTokenPresent(hasToken());
+
+    const bootstrap = async () => {
+      if (cognito) {
+        await refreshSessionToken();
+        if (!cancelled) {
+          setTokenPresent(hasToken());
+          setChecking(false);
+        }
+        return;
+      }
+      recheck();
+    };
+
+    void bootstrap();
 
     window.addEventListener('storage', recheck);
     window.addEventListener('guitars:token-changed', recheck);
     return () => {
+      cancelled = true;
       window.removeEventListener('storage', recheck);
       window.removeEventListener('guitars:token-changed', recheck);
     };
-  }, []);
+  }, [cognito]);
+
+  if (checking) {
+    return (
+      <div className="mx-auto max-w-xl p-8 text-center text-sm text-slate-600">
+        Checking sign-in status…
+      </div>
+    );
+  }
 
   if (tokenPresent) return <>{children}</>;
+
+  if (cognito) {
+    return (
+      <div className="mx-auto max-w-xl p-8">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-6">
+          <h2 className="text-lg font-semibold text-amber-900">Sign in required</h2>
+          <p className="mt-2 text-sm text-amber-900">
+            Sign in with your Cognito account to access the guitar collection.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/login" className="btn-primary">
+              Sign in
+            </Link>
+            <Link to="/register" className="btn-secondary">
+              Register
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-xl p-8">
       <div className="rounded-lg border border-amber-300 bg-amber-50 p-6">
-        <h2 className="text-lg font-semibold text-amber-900">
-          No bearer token configured
-        </h2>
+        <h2 className="text-lg font-semibold text-amber-900">No bearer token configured</h2>
         <p className="mt-2 text-sm text-amber-900">
-          The GuitarCollection API requires a bearer token on every request. This
-          build does not have one baked in, and the runtime override
-          (<code className="rounded bg-amber-100 px-1">sessionStorage</code> key{' '}
-          <code className="rounded bg-amber-100 px-1">{RUNTIME_TOKEN_KEY}</code>) is
-          empty.
+          The GuitarCollection API requires a bearer token on every request. This build does not
+          have one baked in, and the runtime override (
+          <code className="rounded bg-amber-100 px-1">sessionStorage</code> key{' '}
+          <code className="rounded bg-amber-100 px-1">{RUNTIME_TOKEN_KEY}</code>) is empty.
         </p>
         <p className="mt-4">
           <Link to="/settings" className="btn-primary">

@@ -1,4 +1,9 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { notifyTokenChanged } from '@/lib/auth-events';
+import { signOut } from '@/lib/cognito-auth';
+import { isCognitoEnabled } from '@/lib/cognito-config';
+import { clearRuntimeToken, hasToken } from '@/lib/token';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-1.5 text-sm font-medium ${
@@ -8,6 +13,30 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 export const App = () => {
+  const navigate = useNavigate();
+  const cognito = isCognitoEnabled();
+  const [signedIn, setSignedIn] = useState(() => hasToken());
+
+  useEffect(() => {
+    const recheck = () => setSignedIn(hasToken());
+    window.addEventListener('guitars:token-changed', recheck);
+    window.addEventListener('storage', recheck);
+    return () => {
+      window.removeEventListener('guitars:token-changed', recheck);
+      window.removeEventListener('storage', recheck);
+    };
+  }, []);
+
+  const logout = () => {
+    if (cognito) {
+      signOut();
+    } else {
+      clearRuntimeToken();
+    }
+    notifyTokenChanged();
+    navigate(cognito ? '/login' : '/settings', { replace: true });
+  };
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
@@ -21,9 +50,31 @@ export const App = () => {
             <NavLink to="/guitars" className={navLinkClass} end>
               Collection
             </NavLink>
-            <NavLink to="/settings" className={navLinkClass}>
-              Settings
-            </NavLink>
+            {cognito ? (
+              signedIn ? (
+                <button type="button" onClick={logout} className="btn-secondary">
+                  Sign out
+                </button>
+              ) : (
+                <>
+                  <NavLink to="/login" className={navLinkClass}>
+                    Sign in
+                  </NavLink>
+                  <NavLink to="/register" className={navLinkClass}>
+                    Register
+                  </NavLink>
+                </>
+              )
+            ) : (
+              <NavLink to="/settings" className={navLinkClass}>
+                Settings
+              </NavLink>
+            )}
+            {cognito ? (
+              <NavLink to="/settings" className={navLinkClass}>
+                Settings
+              </NavLink>
+            ) : null}
           </nav>
         </div>
       </header>

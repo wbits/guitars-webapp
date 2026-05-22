@@ -12,6 +12,8 @@ import { GuitarList } from './pages/GuitarList';
 import { GuitarNew } from './pages/GuitarNew';
 import { GuitarView } from './pages/GuitarView';
 import { GuitarEdit } from './pages/GuitarEdit';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { Settings } from './pages/Settings';
 import './index.css';
 
@@ -64,6 +66,8 @@ const router = createBrowserRouter([
         ),
       },
       { path: 'settings', element: <Settings /> },
+      { path: 'login', element: <Login /> },
+      { path: 'register', element: <Register /> },
       { path: '*', element: <Navigate to="/guitars" replace /> },
     ],
   },
