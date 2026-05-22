@@ -25,12 +25,8 @@ describe('cognito-config', () => {
 });
 
 describe('cognitoErrorMessage', () => {
-  beforeEach(() => {
-    vi.resetModules();
-  });
-
   it('maps known Cognito error codes', async () => {
-    const { cognitoErrorMessage } = await import('./cognito-auth');
+    const { cognitoErrorMessage } = await import('./cognito-errors');
     expect(
       cognitoErrorMessage(Object.assign(new Error('bad'), { code: 'NotAuthorizedException' })),
     ).toBe('Incorrect email or password.');

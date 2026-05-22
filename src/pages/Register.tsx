@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import {
-  cognitoErrorMessage,
   confirmSignUp,
   resendConfirmationCode,
   signUp,
 } from '@/lib/cognito-auth';
+import { cognitoErrorMessage } from '@/lib/cognito-errors';
 import { isCognitoEnabled } from '@/lib/cognito-config';
 import { hasToken } from '@/lib/token';
 

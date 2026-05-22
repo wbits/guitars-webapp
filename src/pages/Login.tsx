@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { cognitoErrorMessage, signIn } from '@/lib/cognito-auth';
+import { cognitoErrorMessage } from '@/lib/cognito-errors';
+import { signIn } from '@/lib/cognito-auth';
 import { isCognitoEnabled } from '@/lib/cognito-config';
 import { notifyTokenChanged } from '@/lib/auth-events';
 import { hasToken } from '@/lib/token';

@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { refreshSessionToken } from '@/lib/cognito-auth';
 import { isCognitoEnabled } from '@/lib/cognito-config';
 import { hasToken, RUNTIME_TOKEN_KEY } from '@/lib/token';
 
@@ -25,6 +24,7 @@ export const AuthGate = ({ children }: AuthGateProps) => {
 
     const bootstrap = async () => {
       if (cognito) {
+        const { refreshSessionToken } = await import('@/lib/cognito-auth');
         await refreshSessionToken();
         if (!cancelled) {
           setTokenPresent(hasToken());

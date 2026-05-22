@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -12,9 +12,16 @@ import { GuitarList } from './pages/GuitarList';
 import { GuitarNew } from './pages/GuitarNew';
 import { GuitarView } from './pages/GuitarView';
 import { GuitarEdit } from './pages/GuitarEdit';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
 import { Settings } from './pages/Settings';
+
+const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
+const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
+
+const lazyPage = (Page: React.ComponentType) => (
+  <Suspense fallback={<p className="text-sm text-slate-600">Loading…</p>}>
+    <Page />
+  </Suspense>
+);
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -66,8 +73,8 @@ const router = createBrowserRouter([
         ),
       },
       { path: 'settings', element: <Settings /> },
-      { path: 'login', element: <Login /> },
-      { path: 'register', element: <Register /> },
+      { path: 'login', element: lazyPage(Login) },
+      { path: 'register', element: lazyPage(Register) },
       { path: '*', element: <Navigate to="/guitars" replace /> },
     ],
   },

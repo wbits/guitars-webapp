@@ -1,20 +1,33 @@
-import {
-  AuthenticationDetails,
-  CognitoUser,
-  CognitoUserAttribute,
+import type {
   CognitoUserPool,
-  type CognitoUserSession,
+  CognitoUserSession,
 } from 'amazon-cognito-identity-js';
 import { cognitoClientId, cognitoUserPoolId, isCognitoEnabled } from '@/lib/cognito-config';
 import { clearRuntimeToken, setRuntimeToken } from '@/lib/token';
 
+type CognitoModule = typeof import('amazon-cognito-identity-js');
+
+let cognitoModule: CognitoModule | null = null;
 let userPool: CognitoUserPool | null = null;
 
-const getUserPool = (): CognitoUserPool => {
+const loadCognito = async (): Promise<CognitoModule> => {
+  if (cognitoModule) return cognitoModule;
+
+  const { Buffer } = await import('buffer');
+  if (!globalThis.Buffer) {
+    globalThis.Buffer = Buffer;
+  }
+
+  cognitoModule = await import('amazon-cognito-identity-js');
+  return cognitoModule;
+};
+
+const getUserPool = async (): Promise<CognitoUserPool> => {
   if (!isCognitoEnabled()) {
     throw new Error('Cognito is not configured');
   }
   if (!userPool) {
+    const { CognitoUserPool } = await loadCognito();
     userPool = new CognitoUserPool({
       UserPoolId: cognitoUserPoolId()!,
       ClientId: cognitoClientId()!,
@@ -29,34 +42,11 @@ const storeAccessToken = (session: CognitoUserSession): string => {
   return token;
 };
 
-export const cognitoErrorMessage = (err: unknown): string => {
-  if (err instanceof Error) {
-    const e = err as Error & { code?: string };
-    switch (e.code ?? e.name) {
-      case 'UserNotConfirmedException':
-        return 'Please confirm your email before signing in.';
-      case 'NotAuthorizedException':
-        return 'Incorrect email or password.';
-      case 'UsernameExistsException':
-        return 'An account with this email already exists.';
-      case 'InvalidPasswordException':
-        return 'Password does not meet requirements.';
-      case 'CodeMismatchException':
-        return 'Invalid verification code.';
-      case 'ExpiredCodeException':
-        return 'Verification code has expired. Request a new one.';
-      case 'InvalidParameterException':
-        return e.message || 'Invalid input.';
-      default:
-        return e.message || 'Something went wrong.';
-    }
-  }
-  return 'Something went wrong.';
-};
-
-export const signUp = (email: string, password: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    getUserPool().signUp(
+export const signUp = async (email: string, password: string): Promise<void> => {
+  const { CognitoUserAttribute } = await loadCognito();
+  const pool = await getUserPool();
+  await new Promise<void>((resolve, reject) => {
+    pool.signUp(
       email.trim(),
       password,
       [new CognitoUserAttribute({ Name: 'email', Value: email.trim() })],
@@ -67,32 +57,42 @@ export const signUp = (email: string, password: string): Promise<void> =>
       },
     );
   });
+};
 
-export const confirmSignUp = (email: string, code: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email.trim(), Pool: getUserPool() });
+export const confirmSignUp = async (email: string, code: string): Promise<void> => {
+  const { CognitoUser } = await loadCognito();
+  const pool = await getUserPool();
+  const user = new CognitoUser({ Username: email.trim(), Pool: pool });
+  await new Promise<void>((resolve, reject) => {
     user.confirmRegistration(code.trim(), true, (err) => {
       if (err) reject(err);
       else resolve();
     });
   });
+};
 
-export const resendConfirmationCode = (email: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email.trim(), Pool: getUserPool() });
+export const resendConfirmationCode = async (email: string): Promise<void> => {
+  const { CognitoUser } = await loadCognito();
+  const pool = await getUserPool();
+  const user = new CognitoUser({ Username: email.trim(), Pool: pool });
+  await new Promise<void>((resolve, reject) => {
     user.resendConfirmationCode((err) => {
       if (err) reject(err);
       else resolve();
     });
   });
+};
 
-export const signIn = (email: string, password: string): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email.trim(), Pool: getUserPool() });
-    const authDetails = new AuthenticationDetails({
-      Username: email.trim(),
-      Password: password,
-    });
+export const signIn = async (email: string, password: string): Promise<string> => {
+  const { AuthenticationDetails, CognitoUser } = await loadCognito();
+  const pool = await getUserPool();
+  const user = new CognitoUser({ Username: email.trim(), Pool: pool });
+  const authDetails = new AuthenticationDetails({
+    Username: email.trim(),
+    Password: password,
+  });
+
+  return new Promise((resolve, reject) => {
     user.authenticateUser(authDetails, {
       onSuccess: (session) => resolve(storeAccessToken(session)),
       onFailure: (err) => reject(err),
@@ -101,26 +101,32 @@ export const signIn = (email: string, password: string): Promise<string> =>
       },
     });
   });
+};
 
-export const signOut = (): void => {
-  const user = getUserPool().getCurrentUser();
+export const signOut = async (): Promise<void> => {
+  if (!isCognitoEnabled()) {
+    clearRuntimeToken();
+    return;
+  }
+
+  const pool = await getUserPool();
+  const user = pool.getCurrentUser();
   if (user) user.signOut();
   clearRuntimeToken();
 };
 
-export const refreshSessionToken = (): Promise<string | null> =>
-  new Promise((resolve) => {
-    if (!isCognitoEnabled()) {
-      resolve(null);
-      return;
-    }
+export const refreshSessionToken = async (): Promise<string | null> => {
+  if (!isCognitoEnabled()) {
+    return null;
+  }
 
-    const user = getUserPool().getCurrentUser();
-    if (!user) {
-      resolve(null);
-      return;
-    }
+  const pool = await getUserPool();
+  const user = pool.getCurrentUser();
+  if (!user) {
+    return null;
+  }
 
+  return new Promise((resolve) => {
     user.getSession((err: Error | null, session: CognitoUserSession | null) => {
       if (err || !session?.isValid()) {
         clearRuntimeToken();
@@ -130,3 +136,4 @@ export const refreshSessionToken = (): Promise<string | null> =>
       resolve(storeAccessToken(session));
     });
   });
+};

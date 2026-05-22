@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { notifyTokenChanged } from '@/lib/auth-events';
-import { signOut } from '@/lib/cognito-auth';
 import { isCognitoEnabled } from '@/lib/cognito-config';
 import { clearRuntimeToken, hasToken } from '@/lib/token';
 
@@ -29,7 +28,7 @@ export const App = () => {
 
   const logout = () => {
     if (cognito) {
-      signOut();
+      void import('@/lib/cognito-auth').then(({ signOut }) => signOut());
     } else {
       clearRuntimeToken();
     }
