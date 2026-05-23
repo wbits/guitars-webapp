@@ -2,12 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { getMosaicTileSize, mosaicTileClassName } from './mosaic-tile';
 
 describe('mosaic-tile', () => {
-  it('returns a stable tile size for a guitar id', () => {
-    expect(getMosaicTileSize('abc-123')).toBe(getMosaicTileSize('abc-123'));
+  it('returns a stable tile size for a guitar id and layout seed', () => {
+    expect(getMosaicTileSize('abc-123', 42)).toBe(getMosaicTileSize('abc-123', 42));
+  });
+
+  it('can vary tile size for the same guitar when the layout seed changes', () => {
+    const sizes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((seed) => getMosaicTileSize('abc-123', seed));
+    expect(new Set(sizes).size).toBeGreaterThan(1);
   });
 
   it('mixes all tile sizes across ids', () => {
-    const sizes = Array.from({ length: 100 }, (_, index) => getMosaicTileSize(`guitar-${index}`));
+    const sizes = Array.from({ length: 100 }, (_, index) =>
+      getMosaicTileSize(`guitar-${index}`, 99),
+    );
     const unique = new Set(sizes);
 
     expect(unique.has('unit')).toBe(true);

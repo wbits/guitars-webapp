@@ -11,9 +11,13 @@ const hashId = (id: string): number => {
   return hash >>> 0;
 };
 
-/** Stable pseudo-random tile size from guitar id (not re-randomized on re-render). */
-export const getMosaicTileSize = (id: string): MosaicTileSize => {
-  const bucket = hashId(id) % 25;
+/** New seed per overview visit; layout only, guitar data and images stay cached. */
+export const createMosaicLayoutSeed = (): number =>
+  Math.floor(Math.random() * 0x1_0000_0000) >>> 0;
+
+/** Tile size from guitar id and a per-load layout seed. */
+export const getMosaicTileSize = (id: string, layoutSeed = 0): MosaicTileSize => {
+  const bucket = (hashId(id) ^ layoutSeed) % 25;
 
   if (bucket === 0) return 'feature';
   if (bucket <= 2) return 'wide';
