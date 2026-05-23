@@ -44,7 +44,7 @@ export const GuitarView = () => {
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
             <Link to="/guitars" className="hover:underline">
-              ← Back to all guitars
+              ← Back to collection
             </Link>
           </p>
           <h1 className="text-2xl font-semibold break-words">
@@ -69,6 +69,19 @@ export const GuitarView = () => {
       </header>
 
       <GuitarCollectionNav previous={neighbors.previous} next={neighbors.next} />
+
+      {!g.owner ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="font-medium">This guitar is not in your collection yet.</p>
+          <p className="mt-1">
+            Save it once from{' '}
+            <Link to={`/guitars/${g.id}/edit`} className="font-medium underline">
+              Edit
+            </Link>{' '}
+            to claim ownership and show it on the overview.
+          </p>
+        </div>
+      ) : null}
 
       {deleteError ? <ErrorBanner error={deleteError} title="Could not delete guitar" /> : null}
 

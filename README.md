@@ -1,10 +1,9 @@
 # guitars-webapp
 
-A small React + TypeScript single-page app for browsing and managing a guitar
-collection. It is a thin UI over the **GuitarCollection** HTTP API at
+A small React + TypeScript single-page app for browsing and managing a personal
+guitar collection. It is a thin UI over the **GuitarCollection** HTTP API at
 [`wbits/guitars`](https://github.com/wbits/guitars) — a Go AWS Lambda fronted
-by API Gateway that exposes five endpoints under `/guitar` (list, get, create,
-replace, delete) and authenticates every request with a bearer token.
+by API Gateway.
 
 The app is shipped as a static bundle (Vite build) and deployed to S3 +
 CloudFront.
@@ -17,6 +16,7 @@ CloudFront.
 - react-hook-form + zod for form state and validation
 - Tailwind CSS (no UI kit)
 - Native `fetch` wrapped in a tiny typed `apiClient`
+- Amazon Cognito (production) or a shared bearer token (local dev)
 - Vitest + @testing-library/react
 
 ## Project layout
@@ -24,27 +24,67 @@ CloudFront.
 ```
 src/
 ├── api/         fetch wrapper + typed CRUD helpers and React Query hooks
-├── components/  AuthGate, GuitarForm, MoneyInput, PictureGallery, ErrorBanner
+├── components/  AuthGate, GuitarForm, GuitarMosaicGrid, PictureGallery, …
 ├── domain/      zod schema + TS types mirroring the API contract
-├── lib/         token resolution, money conversion + formatting
-├── pages/       routes: GuitarList, GuitarNew, GuitarView, GuitarEdit, Settings
+├── lib/         Cognito auth, token resolution, money conversion + formatting
+├── pages/       routes: GuitarList, GuitarNew, GuitarView, GuitarEdit, Login, …
 ├── App.tsx      shell layout + nav
 └── main.tsx     React Query provider + router + AuthGate wiring
 ```
 
 ## Routes
 
-| Path                  | Purpose                                        |
-| --------------------- | ---------------------------------------------- |
-| `/`                   | Redirects to `/guitars`                        |
-| `/guitars`            | Table of guitars, sorted by brand              |
-| `/guitars/new`        | Create form                                    |
-| `/guitars/:id`        | Detail view + picture gallery + delete modal   |
-| `/guitars/:id/edit`   | Edit form (prefilled)                          |
-| `/settings`           | Paste a runtime bearer token (sessionStorage)  |
+| Path                  | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `/`                   | Redirects to `/guitars`                              |
+| `/guitars`            | Mosaic overview of your guitars, sorted by brand     |
+| `/guitars/new`        | Create form                                          |
+| `/guitars/:id`        | Detail view + picture gallery + delete modal         |
+| `/guitars/:id/edit`   | Edit form (prefilled)                                |
+| `/login`              | Cognito sign-in (when Cognito is configured)         |
+| `/register`           | Cognito registration (when Cognito is configured)    |
+| `/settings`           | Token info / sign-out helper                         |
 
-All routes except `/settings` are wrapped in `<AuthGate>`, which blocks the UI
-with a friendly message linking to `/settings` whenever no token is configured.
+All collection routes are wrapped in `<AuthGate>`, which requires a valid API
+credential before rendering.
+
+## Authentication
+
+Production uses **Amazon Cognito**. After sign-in the app stores the Cognito
+access token in `sessionStorage` and sends it as
+`Authorization: Bearer <token>` on every API request. The API maps the token
+to a user id (`sub`) and scopes the collection to that caller.
+
+When the three Cognito env vars below are **not** set at build time, the app
+falls back to a legacy shared bearer token for local development:
+
+1. **Build-time env var** (`VITE_GUITARS_BEARER_TOKEN`), or
+2. **Runtime override** pasted on `/settings` (stored in `sessionStorage`).
+
+Do not bake a production bearer token into the bundle — use Cognito instead.
+
+## API contract (client view)
+
+| Method | Path             | Description                                |
+| ------ | ---------------- | ------------------------------------------ |
+| GET    | `/guitar`        | List guitars owned by the signed-in user   |
+| GET    | `/guitar/{id}`   | Retrieve a single guitar                   |
+| POST   | `/guitar`        | Add a new guitar                           |
+| PUT    | `/guitar/{id}`   | Replace an existing guitar                 |
+| DELETE | `/guitar/{id}`   | Remove a guitar                            |
+
+Responses include `owner` (Cognito user id). Clients do **not** send `owner` in
+POST/PUT bodies; the API assigns it from the authenticated user.
+
+POST/PUT bodies include `coverPictureIndex` — the index into `pictures` for the
+thumbnail shown on the collection overview. Prices are in **minor units**
+(cents).
+
+### Legacy records
+
+Guitars created before per-user ownership was introduced have no `owner`. They
+are hidden from the list until the signed-in user opens them (by direct link)
+and saves once from the edit form, which backfills ownership.
 
 ## Local development
 
@@ -56,13 +96,16 @@ npm install
 npm run dev                  # http://localhost:5173
 ```
 
-Required environment variables (all `VITE_`-prefixed so they are inlined into
-the bundle):
+Environment variables (all `VITE_`-prefixed so they are inlined into the
+bundle):
 
-| Variable                      | Purpose                                                                                         |
-| ----------------------------- | ----------------------------------------------------------------------------------------------- |
-| `VITE_GUITARS_API_BASE_URL`   | Base URL of the GuitarCollection API (no trailing slash).                                       |
-| `VITE_GUITARS_BEARER_TOKEN`   | Optional bearer token baked into the build. Anything set here is publicly visible — see below.  |
+| Variable                      | Purpose                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `VITE_GUITARS_API_BASE_URL`   | Base URL of the GuitarCollection API (no trailing slash). Required.     |
+| `VITE_GUITARS_BEARER_TOKEN`   | Optional shared token for local dev when Cognito is not configured.     |
+| `VITE_COGNITO_REGION`         | Cognito region (e.g. `eu-central-1`). Enables sign-in when set with the two below. |
+| `VITE_COGNITO_USER_POOL_ID`  | Cognito user pool id.                                                   |
+| `VITE_COGNITO_CLIENT_ID`      | Cognito app client id (`guitars-webapp`).                               |
 
 Useful scripts:
 
@@ -77,30 +120,6 @@ Useful scripts:
 
 The `Makefile` mirrors the most common scripts (`install`, `dev`, `test`,
 `lint`, `build`) and adds `deploy` / `invalidate` for the static-hosting flow.
-
-## Security: bearer-token trade-off
-
-The GuitarCollection API requires `Authorization: Bearer <token>` on every
-request. Because this app is a static SPA — there is no server we control that
-can hold a secret — we offer **two** ways to supply the token, both
-implemented in `src/lib/token.ts`:
-
-1. **Build-time env var** (`VITE_GUITARS_BEARER_TOKEN`).
-   If set when `npm run build` runs, the value is inlined into the JavaScript
-   bundle. **Anyone who downloads the bundle can read it.** This is fine for a
-   personal deployment with a token that only you use, but it is not safe for
-   shared deployments.
-
-2. **Runtime override** (`/settings`).
-   Pasting a token on the Settings page stores it in `sessionStorage` (not
-   `localStorage`) under the key `guitars:bearerToken`. It lives only for the
-   current browser tab and is **never** sent to any server other than the API.
-   When both sources are present, the runtime value wins.
-
-For shared deploys prefer leaving `VITE_GUITARS_BEARER_TOKEN` blank and asking
-each user to paste their own token at `/settings`. A future v2 should retire
-both options and use a proper auth flow (Amazon Cognito, OAuth, or similar)
-where the static site only ever sees a short-lived, per-user credential.
 
 ## Building and deploying
 
@@ -130,8 +149,10 @@ sam deploy \
 After the stack exists, build and upload:
 
 ```sh
-export VITE_GUITARS_API_BASE_URL=https://your-api.execute-api.eu-west-1.amazonaws.com/Prod
-export VITE_GUITARS_BEARER_TOKEN=     # leave blank for runtime-only tokens
+export VITE_GUITARS_API_BASE_URL=https://guitars.brouwers.club
+export VITE_COGNITO_REGION=eu-central-1
+export VITE_COGNITO_USER_POOL_ID=eu-central-1_XXXXX
+export VITE_COGNITO_CLIENT_ID=xxxxxxxx
 export BUCKET=my-guitars-webapp-bucket
 export DIST=E1ABCDEFGHIJKL
 
@@ -151,31 +172,18 @@ make invalidate
 5. `aws cloudfront create-invalidation --paths "/*"`
 
 AWS credentials are obtained via OIDC — **no static access keys are stored in
-the repo**. You must configure:
+the repo**. Configure in the GitHub repo:
 
 | Kind              | Name                       | Purpose                                                                |
 | ----------------- | -------------------------- | ---------------------------------------------------------------------- |
 | Secret            | `AWS_DEPLOY_ROLE_ARN`      | IAM role the workflow assumes (must trust `token.actions.githubusercontent.com`). |
-| Secret            | `GUITARS_BEARER_TOKEN`     | Exposed to the build as `VITE_GUITARS_BEARER_TOKEN`. Optional.         |
 | Variable          | `GUITARS_API_BASE_URL`     | Exposed to the build as `VITE_GUITARS_API_BASE_URL`. Required.         |
+| Variable          | `COGNITO_REGION`           | Exposed as `VITE_COGNITO_REGION`. Defaults to `eu-central-1` if unset. |
+| Variable          | `COGNITO_USER_POOL_ID`     | Exposed as `VITE_COGNITO_USER_POOL_ID`. Required for production auth.  |
+| Variable          | `COGNITO_CLIENT_ID`        | Exposed as `VITE_COGNITO_CLIENT_ID`. Required for production auth.     |
 | Variable          | `GUITARS_BUCKET`           | Name of the S3 bucket (from `template.yaml` outputs).                  |
 | Variable          | `GUITARS_DISTRIBUTION_ID`  | CloudFront distribution ID (from `template.yaml` outputs).             |
 | Variable (opt.)   | `AWS_REGION`               | Defaults to `eu-west-1` if unset.                                      |
 
-## CORS dependency on the API side
-
-The deployed site lives at a CloudFront domain and calls the API at a
-different origin (`*.execute-api.<region>.amazonaws.com`). For the browser to
-allow those requests the API must respond to preflight `OPTIONS` and include
-the appropriate `Access-Control-Allow-*` headers. The current
-[`wbits/guitars`](https://github.com/wbits/guitars) API does not configure
-CORS, so until that follow-up is shipped the deployed UI will be blocked by
-the browser when calling a remote API. Local development via `npm run dev` is
-not affected if you call a local SAM-Local endpoint that returns CORS headers.
-
-## Out of scope (v1)
-
-- No authentication beyond the bearer token.
-- No CORS work on the API itself (tracked as a follow-up).
-- No image uploads — pictures are referenced by absolute URL only.
-- No price-comparison / scraper integration.
+Cognito ids come from the [`wbits/guitars`](https://github.com/wbits/guitars)
+API stack outputs (`CognitoUserPoolId`, `CognitoUserPoolClientId`).

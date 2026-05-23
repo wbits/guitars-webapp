@@ -73,6 +73,7 @@ export type GuitarInput = z.infer<typeof guitarInputSchema>;
 export const guitarSchema = guitarFieldsSchema
   .extend({
     id: z.string().min(1),
+    owner: z.string().min(1).optional(),
   })
   .superRefine(refineCoverPicture);
 
