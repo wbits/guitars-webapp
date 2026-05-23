@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useDeleteGuitar, useGuitar } from '@/api/guitars';
+import { useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
 import { useMarketLogs } from '@/api/marketLogs';
 import { ErrorBanner } from '@/components/ErrorBanner';
+import { GuitarCollectionNav } from '@/components/GuitarCollectionNav';
 import { MarketLogList } from '@/components/MarketLogList';
 import { PictureGallery } from '@/components/PictureGallery';
+import { getGuitarNeighbors } from '@/lib/guitar-collection';
 import { formatMoney } from '@/lib/money';
 
 export const GuitarView = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const guitar = useGuitar(id);
+  const guitars = useGuitars();
   const marketLogs = useMarketLogs(id);
   const del = useDeleteGuitar();
   const [confirming, setConfirming] = useState(false);
@@ -22,6 +25,7 @@ export const GuitarView = () => {
   }
 
   const g = guitar.data;
+  const neighbors = getGuitarNeighbors(guitars.data ?? [], g.id);
 
   const confirmDelete = async () => {
     setDeleteError(null);
@@ -63,6 +67,8 @@ export const GuitarView = () => {
           </button>
         </div>
       </header>
+
+      <GuitarCollectionNav previous={neighbors.previous} next={neighbors.next} />
 
       {deleteError ? <ErrorBanner error={deleteError} title="Could not delete guitar" /> : null}
 

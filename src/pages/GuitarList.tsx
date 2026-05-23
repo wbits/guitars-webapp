@@ -3,17 +3,12 @@ import { Link } from 'react-router-dom';
 import { useGuitars } from '@/api/guitars';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { GuitarCard } from '@/components/GuitarCard';
+import { sortGuitarsForCollection } from '@/lib/guitar-collection';
 
 export const GuitarList = () => {
   const { data, isLoading, isError, error, refetch, isFetching } = useGuitars();
 
-  const sorted = useMemo(
-    () =>
-      [...(data ?? [])].sort((a, b) =>
-        a.brand.localeCompare(b.brand, undefined, { sensitivity: 'base' }),
-      ),
-    [data],
-  );
+  const sorted = useMemo(() => sortGuitarsForCollection(data ?? []), [data]);
 
   return (
     <section className="space-y-4">
