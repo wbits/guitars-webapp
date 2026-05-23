@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import type { MarketLog } from '@/domain/marketLog';
 import { formatMoney } from '@/lib/money';
+
+const PAGE_SIZE = 20;
 
 const sourceLabel: Record<MarketLog['source'], string> = {
   reverb: 'Reverb',
@@ -22,6 +25,12 @@ const formatObservedAt = (iso: string): string => {
 };
 
 export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [logs]);
+
   if (logs.length === 0) {
     return (
       <p className="text-sm text-slate-500">
@@ -30,10 +39,13 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
     );
   }
 
+  const visibleLogs = logs.slice(0, visibleCount);
+  const hasMore = visibleCount < logs.length;
+
   return (
-    <>
+    <div className="space-y-4">
       <ul className="space-y-3 md:hidden">
-        {logs.map((log) => (
+        {visibleLogs.map((log) => (
           <li
             key={log.id}
             className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm"
@@ -75,7 +87,7 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => (
+            {visibleLogs.map((log) => (
               <tr key={log.id} className="border-b border-slate-100 last:border-0">
                 <td className="py-2 pr-4 whitespace-nowrap text-slate-700">
                   {formatObservedAt(log.observedAt)}
@@ -104,6 +116,25 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
           </tbody>
         </table>
       </div>
-    </>
+
+      {hasMore ? (
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, logs.length))}
+            className="btn-secondary w-full sm:w-auto"
+          >
+            Show more
+          </button>
+          <p className="text-xs text-slate-500">
+            Showing {visibleLogs.length} of {logs.length}
+          </p>
+        </div>
+      ) : logs.length > PAGE_SIZE ? (
+        <p className="text-center text-xs text-slate-500">Showing all {logs.length} observations</p>
+      ) : null}
+    </div>
   );
 };
+
+export { PAGE_SIZE as MARKET_LOG_PAGE_SIZE };
