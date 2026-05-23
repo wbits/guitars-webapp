@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useGuitars } from '@/api/guitars';
 import { ErrorBanner } from '@/components/ErrorBanner';
-import { GuitarCard } from '@/components/GuitarCard';
+import { GuitarMosaicGrid } from '@/components/GuitarMosaicGrid';
 import { sortGuitarsForCollection } from '@/lib/guitar-collection';
 
 export const GuitarList = () => {
@@ -48,13 +48,9 @@ export const GuitarList = () => {
       ) : null}
 
       {sorted.length > 0 ? (
-        <ul className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          {sorted.map((guitar) => (
-            <li key={guitar.id}>
-              <GuitarCard guitar={guitar} />
-            </li>
-          ))}
-        </ul>
+        <div className="-mx-4 overflow-hidden bg-white sm:mx-0 sm:rounded-md">
+          <GuitarMosaicGrid guitars={sorted} />
+        </div>
       ) : null}
     </section>
   );

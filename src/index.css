@@ -39,4 +39,21 @@
   .error-text {
     @apply mt-1 text-xs text-red-600;
   }
+
+  .mosaic-grid {
+    @apply grid auto-rows-[1fr] grid-flow-dense grid-cols-3 gap-0.5 bg-white sm:grid-cols-4 lg:grid-cols-6;
+  }
+
+  .mosaic-grid::before {
+    content: '';
+    width: 0;
+    padding-bottom: 100%;
+    grid-row: 1 / 1;
+    grid-column: 1 / 1;
+  }
+
+  .mosaic-grid > :first-child {
+    grid-row: 1 / 1;
+    grid-column: 1 / 1;
+  }
 }
