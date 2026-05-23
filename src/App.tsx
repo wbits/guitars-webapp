@@ -5,7 +5,7 @@ import { isCognitoEnabled } from '@/lib/cognito-config';
 import { clearRuntimeToken, hasToken } from '@/lib/token';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded-md px-3 py-1.5 text-sm font-medium ${
+  `inline-flex min-h-11 touch-manipulation items-center rounded-md px-3 py-2 text-sm font-medium ${
     isActive
       ? 'bg-slate-900 text-white'
       : 'text-slate-700 hover:bg-slate-200'
@@ -39,13 +39,14 @@ export const App = () => {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <NavLink to="/guitars" className="text-lg font-semibold tracking-tight text-slate-900">
-              Guitars
-            </NavLink>
-          </div>
-          <nav className="flex items-center gap-1">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:flex-row sm:items-center sm:justify-between">
+          <NavLink
+            to="/guitars"
+            className="text-lg font-semibold tracking-tight text-slate-900"
+          >
+            Guitars
+          </NavLink>
+          <nav className="flex flex-wrap gap-1 sm:justify-end">
             <NavLink to="/guitars" className={navLinkClass} end>
               Collection
             </NavLink>
@@ -77,7 +78,7 @@ export const App = () => {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto max-w-5xl px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:py-6">
         <Outlet />
       </main>
     </div>

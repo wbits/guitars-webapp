@@ -36,28 +36,28 @@ export const GuitarView = () => {
 
   return (
     <section className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm text-slate-500">
             <Link to="/guitars" className="hover:underline">
               ← Back to all guitars
             </Link>
           </p>
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold break-words">
             {g.brand} <span className="text-slate-500">{g.typeName}</span>
           </h1>
           <p className="text-sm text-slate-600">
             Built {g.buildYear} · {formatMoney(g.priceAmount, g.priceCurrency)}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link to={`/guitars/${g.id}/edit`} className="btn-secondary">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link to={`/guitars/${g.id}/edit`} className="btn-secondary w-full sm:w-auto">
             Edit
           </Link>
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="btn-danger"
+            className="btn-danger w-full sm:w-auto"
           >
             Delete
           </button>
@@ -115,10 +115,10 @@ export const GuitarView = () => {
               Are you sure you want to delete <strong>{g.brand} {g.typeName}</strong>?
               This cannot be undone.
             </p>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary w-full sm:w-auto"
                 onClick={() => setConfirming(false)}
                 disabled={del.isPending}
               >
@@ -126,7 +126,7 @@ export const GuitarView = () => {
               </button>
               <button
                 type="button"
-                className="btn-danger"
+                className="btn-danger w-full sm:w-auto"
                 onClick={confirmDelete}
                 disabled={del.isPending}
               >
@@ -141,8 +141,8 @@ export const GuitarView = () => {
 };
 
 const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="grid grid-cols-3 gap-2 py-1.5 first:pt-0 last:pb-0">
-    <dt className="text-slate-500">{label}</dt>
-    <dd className="col-span-2 text-slate-900">{value}</dd>
+  <div className="grid gap-1 border-b border-slate-100 py-3 first:pt-0 last:border-b-0 last:pb-0 sm:grid-cols-3 sm:gap-2 sm:py-1.5 sm:border-b-0">
+    <dt className="text-sm font-medium text-slate-500 sm:font-normal">{label}</dt>
+    <dd className="text-sm text-slate-900 break-words sm:col-span-2">{value}</dd>
   </div>
 );

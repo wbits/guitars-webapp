@@ -18,7 +18,7 @@ export const GuitarNew = () => {
         </p>
       </header>
 
-      <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <GuitarForm
           submitting={create.isPending}
           submitLabel="Create"

@@ -17,14 +17,14 @@ export const GuitarList = () => {
 
   return (
     <section className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Guitars</h1>
           <p className="text-sm text-slate-600">
             {isFetching ? 'Refreshing…' : `${sorted.length} guitar${sorted.length === 1 ? '' : 's'}`}
           </p>
         </div>
-        <Link to="/guitars/new" className="btn-primary">
+        <Link to="/guitars/new" className="btn-primary w-full sm:w-auto">
           Add guitar
         </Link>
       </header>
@@ -53,7 +53,7 @@ export const GuitarList = () => {
       ) : null}
 
       {sorted.length > 0 ? (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {sorted.map((guitar) => (
             <li key={guitar.id}>
               <GuitarCard guitar={guitar} />

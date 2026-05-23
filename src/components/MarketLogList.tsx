@@ -31,46 +31,79 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 text-slate-500">
-            <th className="py-2 pr-4 font-medium">Observed</th>
-            <th className="py-2 pr-4 font-medium">Source</th>
-            <th className="py-2 pr-4 font-medium">Status</th>
-            <th className="py-2 pr-4 font-medium">Price</th>
-            <th className="py-2 font-medium">Listing</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log) => (
-            <tr key={log.id} className="border-b border-slate-100 last:border-0">
-              <td className="py-2 pr-4 whitespace-nowrap text-slate-700">
-                {formatObservedAt(log.observedAt)}
-              </td>
-              <td className="py-2 pr-4 text-slate-700">{sourceLabel[log.source]}</td>
-              <td className="py-2 pr-4 text-slate-700">{actionLabel[log.action]}</td>
-              <td className="py-2 pr-4 whitespace-nowrap font-medium text-slate-900">
+    <>
+      <ul className="space-y-3 md:hidden">
+        {logs.map((log) => (
+          <li
+            key={log.id}
+            className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-medium text-slate-900">
                 {formatMoney(log.priceAmount, log.priceCurrency)}
-              </td>
-              <td className="py-2 text-slate-700">
-                {log.listingUrl ? (
-                  <a
-                    href={log.listingUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-slate-900 underline decoration-slate-300 hover:decoration-slate-600"
-                  >
-                    {log.listingTitle?.trim() || 'View listing'}
-                  </a>
-                ) : (
-                  log.listingTitle?.trim() || '—'
-                )}
-              </td>
+              </p>
+              <p className="text-right text-slate-500">{actionLabel[log.action]}</p>
+            </div>
+            <p className="mt-1 text-slate-700">
+              {sourceLabel[log.source]} · {formatObservedAt(log.observedAt)}
+            </p>
+            {log.listingUrl ? (
+              <a
+                href={log.listingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-block text-slate-900 underline decoration-slate-300 hover:decoration-slate-600"
+              >
+                {log.listingTitle?.trim() || 'View listing'}
+              </a>
+            ) : log.listingTitle?.trim() ? (
+              <p className="mt-2 text-slate-700">{log.listingTitle.trim()}</p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="min-w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-slate-500">
+              <th className="py-2 pr-4 font-medium">Observed</th>
+              <th className="py-2 pr-4 font-medium">Source</th>
+              <th className="py-2 pr-4 font-medium">Status</th>
+              <th className="py-2 pr-4 font-medium">Price</th>
+              <th className="py-2 font-medium">Listing</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {logs.map((log) => (
+              <tr key={log.id} className="border-b border-slate-100 last:border-0">
+                <td className="py-2 pr-4 whitespace-nowrap text-slate-700">
+                  {formatObservedAt(log.observedAt)}
+                </td>
+                <td className="py-2 pr-4 text-slate-700">{sourceLabel[log.source]}</td>
+                <td className="py-2 pr-4 text-slate-700">{actionLabel[log.action]}</td>
+                <td className="py-2 pr-4 whitespace-nowrap font-medium text-slate-900">
+                  {formatMoney(log.priceAmount, log.priceCurrency)}
+                </td>
+                <td className="py-2 text-slate-700">
+                  {log.listingUrl ? (
+                    <a
+                      href={log.listingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-slate-900 underline decoration-slate-300 hover:decoration-slate-600"
+                    >
+                      {log.listingTitle?.trim() || 'View listing'}
+                    </a>
+                  ) : (
+                    log.listingTitle?.trim() || '—'
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 };

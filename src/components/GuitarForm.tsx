@@ -256,7 +256,7 @@ export const GuitarForm = ({
         {fields.length === 0 ? (
           <p className="help">No pictures uploaded yet.</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
             {fields.map((field, index) => {
               const isCover = index === coverPictureIndex;
               return (
@@ -276,12 +276,12 @@ export const GuitarForm = ({
                     Overview
                   </span>
                 ) : null}
-                <div className="absolute inset-x-1 bottom-1 flex flex-col gap-1">
+                <div className="absolute inset-x-1 bottom-1 flex flex-col gap-1.5">
                   {!isCover && fields.length > 1 ? (
                     <button
                       type="button"
                       onClick={() => setValue('coverPictureIndex', index)}
-                      className="rounded-md bg-white/95 px-2 py-0.5 text-xs font-medium text-slate-900 hover:bg-white"
+                      className="min-h-9 touch-manipulation rounded-md bg-white/95 px-2 py-1.5 text-xs font-medium text-slate-900 hover:bg-white"
                     >
                       Use for overview
                     </button>
@@ -289,7 +289,7 @@ export const GuitarForm = ({
                   <button
                     type="button"
                     onClick={() => removePicture(index)}
-                    className="rounded-md bg-white/95 px-2 py-0.5 text-xs font-medium text-slate-900 hover:bg-white"
+                    className="min-h-9 touch-manipulation rounded-md bg-white/95 px-2 py-1.5 text-xs font-medium text-slate-900 hover:bg-white"
                   >
                     Remove
                   </button>
@@ -309,7 +309,7 @@ export const GuitarForm = ({
           <p className="error-text">{(errors.pictures as { message?: string }).message}</p>
         ) : null}
         {uploadError ? <p className="error-text">{uploadError}</p> : null}
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             ref={fileInputRef}
             id="picture-upload"
@@ -323,12 +323,12 @@ export const GuitarForm = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="btn-secondary"
+            className="btn-secondary w-full sm:w-auto"
             disabled={isUploading}
           >
             {isUploading ? 'Uploading…' : 'Upload pictures'}
           </button>
-          <p className="help">JPEG, PNG, WebP, or GIF up to 5 MB each.</p>
+          <p className="help sm:mt-0">JPEG, PNG, WebP, or GIF up to 5 MB each.</p>
         </div>
       </fieldset>
 
@@ -342,15 +342,15 @@ export const GuitarForm = ({
         </div>
       ) : null}
 
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
         {onCancel ? (
-          <button type="button" onClick={onCancel} className="btn-secondary">
+          <button type="button" onClick={onCancel} className="btn-secondary w-full sm:w-auto">
             Cancel
           </button>
         ) : null}
         <button
           type="submit"
-          className="btn-primary"
+          className="btn-primary w-full sm:w-auto"
           disabled={submitting || isUploading}
         >
           {submitting ? 'Saving…' : submitLabel}
