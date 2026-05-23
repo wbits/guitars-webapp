@@ -37,7 +37,7 @@ describe('mosaic-tile', () => {
     const mediumArea = tierArea(counts, 'double');
     const smallArea = tierArea(counts, 'unit');
 
-    expect(largeArea).toBeGreaterThanOrEqual(14);
+    expect(largeArea).toBeGreaterThanOrEqual(12);
     expect(largeArea).toBeLessThanOrEqual(18);
     expect(mediumArea).toBeGreaterThanOrEqual(14);
     expect(mediumArea).toBeLessThanOrEqual(18);
@@ -76,12 +76,12 @@ describe('mosaic-tile', () => {
   it('maps tile sizes to responsive grid span classes', () => {
     expect(mosaicTileClassName('unit')).toBe('col-span-1 row-span-1');
     expect(mosaicTileClassName('double')).toBe('col-span-2 row-span-2');
-    expect(mosaicTileClassName('feature')).toContain('lg:row-span-4');
+    expect(mosaicTileClassName('feature')).toContain('lg:col-span-4 lg:row-span-3');
   });
 
   it('covers the full collection area without dropping items', () => {
     const counts = computeMosaicTileCounts(20);
     expect(counts.feature + counts.double + counts.unit).toBe(20);
-    expect(totalMosaicArea(counts)).toBe(47);
+    expect(totalMosaicArea(counts)).toBe(43);
   });
 });

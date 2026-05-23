@@ -3,7 +3,7 @@ export type MosaicTileSize = 'unit' | 'double' | 'feature';
 export const MOSAIC_TILE_AREA: Record<MosaicTileSize, number> = {
   unit: 1,
   double: 4,
-  feature: 16,
+  feature: 12,
 };
 
 export type MosaicTileCounts = Record<MosaicTileSize, number>;
@@ -24,7 +24,7 @@ export const createMosaicLayoutSeed = (): number =>
   Math.floor(Math.random() * 0x1_0000_0000) >>> 0;
 
 /**
- * Targets ~equal grid area per size tier (16L ≈ 4M ≈ S), capped to:
+ * Targets ~equal grid area per size tier (12L ≈ 4M ≈ S), capped to:
  * 1–3 large, 3–5 medium, rest small.
  */
 export const computeMosaicTileCounts = (itemCount: number): MosaicTileCounts => {
@@ -48,8 +48,8 @@ export const computeMosaicTileCounts = (itemCount: number): MosaicTileCounts => 
     return { unit: itemCount - 3, double: 2, feature: 1 };
   }
 
-  let feature = Math.min(3, Math.max(1, Math.round(itemCount / 21)));
-  let double = Math.min(5, Math.max(3, Math.round(itemCount / 5.25)));
+  let feature = Math.min(3, Math.max(1, Math.round(itemCount / 16)));
+  let double = Math.min(5, Math.max(3, Math.round((itemCount * 3) / 16)));
   let unit = itemCount - feature - double;
 
   while (unit < 0 && double > 3) {
@@ -95,7 +95,7 @@ export const assignMosaicTileSizes = (
 export const mosaicTileClassName = (size: MosaicTileSize): string => {
   switch (size) {
     case 'feature':
-      return 'col-span-3 row-span-3 sm:col-span-4 sm:row-span-4 lg:col-span-4 lg:row-span-4';
+      return 'col-span-3 row-span-2 sm:col-span-4 sm:row-span-3 lg:col-span-4 lg:row-span-3';
     case 'double':
       return 'col-span-2 row-span-2';
     default:
