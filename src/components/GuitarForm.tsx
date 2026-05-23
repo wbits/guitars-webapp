@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   CURRENCIES,
+  guitarFieldsSchema,
   guitarInputSchema,
   type GuitarInput,
 } from '@/domain/guitar';
@@ -25,7 +26,7 @@ export interface GuitarFormProps {
  * picture URL in `{ url }` for the form state and then unwrap on submit via
  * a zod `.transform()`. The resolver still enforces the domain rules.
  */
-const formSchema = guitarInputSchema
+const formSchema = guitarFieldsSchema
   .omit({ pictures: true })
   .extend({
     pictures: z.array(z.object({ url: z.string() })).default([]),
@@ -43,6 +44,7 @@ type FormShape = {
   priceAmount: number | undefined;
   priceCurrency: 'EUR' | 'USD';
   pictures: { url: string }[];
+  coverPictureIndex: number;
   serialNumber?: string;
   description?: string;
 };
@@ -54,6 +56,7 @@ const toFormShape = (v: Partial<GuitarInput> | undefined): FormShape => ({
   priceAmount: v?.priceAmount,
   priceCurrency: v?.priceCurrency ?? 'EUR',
   pictures: (v?.pictures ?? []).map((url) => ({ url })),
+  coverPictureIndex: v?.coverPictureIndex ?? 0,
   serialNumber: v?.serialNumber ?? '',
   description: v?.description ?? '',
 });
@@ -74,6 +77,8 @@ export const GuitarForm = ({
     register,
     control,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormShape, unknown, GuitarInput>({
     resolver: zodResolver(formSchema) as never,
@@ -82,6 +87,22 @@ export const GuitarForm = ({
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'pictures' });
+  const coverPictureIndex = watch('coverPictureIndex') ?? 0;
+
+  const removePicture = (index: number) => {
+    const currentCover = coverPictureIndex;
+    const nextCount = fields.length - 1;
+    let nextCover = currentCover;
+    if (nextCount === 0) {
+      nextCover = 0;
+    } else if (index === currentCover) {
+      nextCover = 0;
+    } else if (index < currentCover) {
+      nextCover = currentCover - 1;
+    }
+    remove(index);
+    setValue('coverPictureIndex', nextCover);
+  };
 
   const handleFilesSelected = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -236,27 +257,54 @@ export const GuitarForm = ({
           <p className="help">No pictures uploaded yet.</p>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {fields.map((field, index) => (
+            {fields.map((field, index) => {
+              const isCover = index === coverPictureIndex;
+              return (
               <li
                 key={field.id}
-                className="relative aspect-square overflow-hidden rounded-md border border-slate-200 bg-white"
+                className={`relative aspect-square overflow-hidden rounded-md border bg-white ${
+                  isCover ? 'border-slate-900 ring-2 ring-slate-900' : 'border-slate-200'
+                }`}
               >
                 <img
                   src={field.url}
                   alt={`Uploaded picture ${index + 1}`}
                   className="h-full w-full object-cover"
                 />
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="absolute right-1 top-1 rounded-md bg-white/90 px-2 py-0.5 text-xs font-medium text-slate-900 hover:bg-white"
-                >
-                  Remove
-                </button>
+                {isCover && fields.length > 1 ? (
+                  <span className="absolute left-1 top-1 rounded-md bg-slate-900 px-2 py-0.5 text-xs font-medium text-white">
+                    Overview
+                  </span>
+                ) : null}
+                <div className="absolute inset-x-1 bottom-1 flex flex-col gap-1">
+                  {!isCover && fields.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setValue('coverPictureIndex', index)}
+                      className="rounded-md bg-white/95 px-2 py-0.5 text-xs font-medium text-slate-900 hover:bg-white"
+                    >
+                      Use for overview
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => removePicture(index)}
+                    className="rounded-md bg-white/95 px-2 py-0.5 text-xs font-medium text-slate-900 hover:bg-white"
+                  >
+                    Remove
+                  </button>
+                </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
+        {fields.length > 1 ? (
+          <p className="help mt-2">
+            Choose which picture appears on the overview page.
+          </p>
+        ) : null}
+        <input type="hidden" {...register('coverPictureIndex', { valueAsNumber: true })} />
         {errors.pictures && !Array.isArray(errors.pictures) ? (
           <p className="error-text">{(errors.pictures as { message?: string }).message}</p>
         ) : null}

@@ -88,6 +88,21 @@ describe('guitarInputSchema', () => {
     if (result.success) expect(result.data.pictures).toEqual([]);
   });
 
+  it('defaults coverPictureIndex to 0 when omitted', () => {
+    const result = guitarInputSchema.safeParse(validPayload());
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.coverPictureIndex).toBe(0);
+  });
+
+  it('rejects coverPictureIndex outside the pictures array', () => {
+    const result = guitarInputSchema.safeParse({
+      ...validPayload(),
+      pictures: ['https://example.com/a.jpg'],
+      coverPictureIndex: 1,
+    });
+    expect(result.success).toBe(false);
+  });
+
   it('treats blank optional fields as undefined', () => {
     const result = guitarInputSchema.safeParse({
       ...validPayload(),

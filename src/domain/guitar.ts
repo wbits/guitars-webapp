@@ -26,11 +26,7 @@ const absoluteUrl = z
     message: 'Picture URLs must start with http(s)://',
   });
 
-/**
- * Schema for what the client sends to the API (POST/PUT body).
- * `id` is server-generated and intentionally not part of this shape.
- */
-export const guitarInputSchema = z.object({
+export const guitarFieldsSchema = z.object({
   brand: trimmedNonEmpty('Brand'),
   typeName: trimmedNonEmpty('Type'),
   buildYear: z
@@ -48,15 +44,37 @@ export const guitarInputSchema = z.object({
     errorMap: () => ({ message: 'Currency must be EUR or USD' }),
   }),
   pictures: z.array(absoluteUrl).default([]),
+  coverPictureIndex: z.number().int().min(0).default(0),
   serialNumber: optionalTrimmed,
   description: optionalTrimmed,
 });
 
+const refineCoverPicture = (
+  data: { pictures: string[]; coverPictureIndex: number },
+  ctx: z.RefinementCtx,
+) => {
+  if (data.pictures.length > 0 && data.coverPictureIndex >= data.pictures.length) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Cover picture must refer to an uploaded picture',
+      path: ['coverPictureIndex'],
+    });
+  }
+};
+
+/**
+ * Schema for what the client sends to the API (POST/PUT body).
+ * `id` is server-generated and intentionally not part of this shape.
+ */
+export const guitarInputSchema = guitarFieldsSchema.superRefine(refineCoverPicture);
+
 export type GuitarInput = z.infer<typeof guitarInputSchema>;
 
-export const guitarSchema = guitarInputSchema.extend({
-  id: z.string().min(1),
-});
+export const guitarSchema = guitarFieldsSchema
+  .extend({
+    id: z.string().min(1),
+  })
+  .superRefine(refineCoverPicture);
 
 export type Guitar = z.infer<typeof guitarSchema>;
 

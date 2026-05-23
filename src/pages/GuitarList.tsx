@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useGuitars } from '@/api/guitars';
 import { ErrorBanner } from '@/components/ErrorBanner';
-import { formatMoney } from '@/lib/money';
+import { GuitarCard } from '@/components/GuitarCard';
 
 export const GuitarList = () => {
   const { data, isLoading, isError, error, refetch, isFetching } = useGuitars();
@@ -53,36 +53,13 @@ export const GuitarList = () => {
       ) : null}
 
       {sorted.length > 0 ? (
-        <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-2">Brand</th>
-                <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2">Build year</th>
-                <th className="px-4 py-2">Price</th>
-                <th className="px-4 py-2">Serial number</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {sorted.map((g) => (
-                <tr key={g.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-2">
-                    <Link to={`/guitars/${g.id}`} className="font-medium text-slate-900 hover:underline">
-                      {g.brand}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2">{g.typeName}</td>
-                  <td className="px-4 py-2 tabular-nums">{g.buildYear}</td>
-                  <td className="px-4 py-2 tabular-nums">
-                    {formatMoney(g.priceAmount, g.priceCurrency)}
-                  </td>
-                  <td className="px-4 py-2 text-slate-600">{g.serialNumber ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {sorted.map((guitar) => (
+            <li key={guitar.id}>
+              <GuitarCard guitar={guitar} />
+            </li>
+          ))}
+        </ul>
       ) : null}
     </section>
   );

@@ -49,6 +49,7 @@ describe('<GuitarForm />', () => {
       priceAmount: 199900,
       priceCurrency: 'EUR',
       pictures: ['https://cdn.example/images/guitars/a.jpg'],
+      coverPictureIndex: 0,
       serialNumber: 'SN-1234',
       description: 'A fine guitar.',
     });
