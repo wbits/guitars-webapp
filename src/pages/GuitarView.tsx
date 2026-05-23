@@ -1,19 +1,30 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCollectionOwners, useUserGuitars } from '@/api/collections';
 import { useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
+import { useCurrentUser } from '@/api/me';
 import { useMarketLogs } from '@/api/marketLogs';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { GuitarCollectionNav } from '@/components/GuitarCollectionNav';
 import { MarketLogList } from '@/components/MarketLogList';
 import { PictureGallery } from '@/components/PictureGallery';
+import {
+  formatCollectionLabel,
+  guitarEditPath,
+  myCollectionPath,
+  userCollectionPath,
+} from '@/lib/collection-routes';
 import { getGuitarNeighbors } from '@/lib/guitar-collection';
 import { formatMoney } from '@/lib/money';
 
 export const GuitarView = () => {
-  const { id = '' } = useParams<{ id: string }>();
+  const { id = '', userId: collectionUserId } = useParams<{ id: string; userId?: string }>();
   const navigate = useNavigate();
   const guitar = useGuitar(id);
-  const guitars = useGuitars();
+  const myGuitars = useGuitars({ enabled: !collectionUserId });
+  const userGuitars = useUserGuitars(collectionUserId, { enabled: Boolean(collectionUserId) });
+  const owners = useCollectionOwners({ enabled: Boolean(collectionUserId) });
+  const me = useCurrentUser();
   const marketLogs = useMarketLogs(id);
   const del = useDeleteGuitar();
   const [confirming, setConfirming] = useState(false);
@@ -25,13 +36,25 @@ export const GuitarView = () => {
   }
 
   const g = guitar.data;
-  const neighbors = getGuitarNeighbors(guitars.data ?? [], g.id);
+  const collectionGuitars = collectionUserId ? (userGuitars.data ?? []) : (myGuitars.data ?? []);
+  const neighbors = getGuitarNeighbors(collectionGuitars, g.id);
+  const isOwnCollectionView = !collectionUserId;
+  const isOwner = Boolean(me.data?.userId && g.owner === me.data.userId);
+  const isLegacyClaimable = !g.owner && isOwnCollectionView;
+  const canEdit = isOwner || isLegacyClaimable;
+  const collectionOwner = owners.data?.find((entry) => entry.userId === collectionUserId);
+  const collectionBackPath = collectionUserId
+    ? userCollectionPath(collectionUserId)
+    : myCollectionPath();
+  const collectionBackLabel = collectionUserId
+    ? `← Back to ${formatCollectionLabel(collectionUserId, me.data?.userId, collectionOwner?.displayName)}'s collection`
+    : '← Back to collection';
 
   const confirmDelete = async () => {
     setDeleteError(null);
     try {
       await del.mutateAsync(g.id);
-      navigate('/guitars');
+      navigate(collectionBackPath);
     } catch (err) {
       setDeleteError(err);
       setConfirming(false);
@@ -43,8 +66,8 @@ export const GuitarView = () => {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
-            <Link to="/guitars" className="hover:underline">
-              ← Back to collection
+            <Link to={collectionBackPath} className="hover:underline">
+              {collectionBackLabel}
             </Link>
           </p>
           <h1 className="text-2xl font-semibold break-words">
@@ -54,28 +77,34 @@ export const GuitarView = () => {
             Built {g.buildYear} · {formatMoney(g.priceAmount, g.priceCurrency)}
           </p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link to={`/guitars/${g.id}/edit`} className="btn-secondary w-full sm:w-auto">
-            Edit
-          </Link>
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="btn-danger w-full sm:w-auto"
-          >
-            Delete
-          </button>
-        </div>
+        {canEdit ? (
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Link to={guitarEditPath(g.id)} className="btn-secondary w-full sm:w-auto">
+              Edit
+            </Link>
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="btn-danger w-full sm:w-auto"
+            >
+              Delete
+            </button>
+          </div>
+        ) : null}
       </header>
 
-      <GuitarCollectionNav previous={neighbors.previous} next={neighbors.next} />
+      <GuitarCollectionNav
+        previous={neighbors.previous}
+        next={neighbors.next}
+        collectionUserId={collectionUserId}
+      />
 
-      {!g.owner ? (
+      {isLegacyClaimable ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
           <p className="font-medium">This guitar is not in your collection yet.</p>
           <p className="mt-1">
             Save it once from{' '}
-            <Link to={`/guitars/${g.id}/edit`} className="font-medium underline">
+            <Link to={guitarEditPath(g.id)} className="font-medium underline">
               Edit
             </Link>{' '}
             to claim ownership and show it on the overview.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { CollectionPicker } from '@/components/CollectionPicker';
 import { notifyTokenChanged } from '@/lib/auth-events';
 import { isCognitoEnabled } from '@/lib/cognito-config';
 import { clearRuntimeToken, hasToken } from '@/lib/token';
@@ -46,10 +47,16 @@ export const App = () => {
           >
             Guitars
           </NavLink>
-          <nav className="flex flex-wrap gap-1 sm:justify-end">
+          <nav className="flex flex-wrap items-center gap-1 sm:justify-end">
             <NavLink to="/guitars" className={navLinkClass} end>
               Collection
             </NavLink>
+            <CollectionPicker />
+            {signedIn ? (
+              <NavLink to="/profile" className={navLinkClass}>
+                Profile
+              </NavLink>
+            ) : null}
             {cognito ? (
               signedIn ? (
                 <button type="button" onClick={logout} className="btn-secondary">
@@ -65,15 +72,6 @@ export const App = () => {
                   </NavLink>
                 </>
               )
-            ) : (
-              <NavLink to="/settings" className={navLinkClass}>
-                Settings
-              </NavLink>
-            )}
-            {cognito ? (
-              <NavLink to="/settings" className={navLinkClass}>
-                Settings
-              </NavLink>
             ) : null}
           </nav>
         </div>

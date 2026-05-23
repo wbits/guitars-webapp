@@ -14,7 +14,7 @@ export const GuitarList = () => {
     <section className="space-y-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Guitars</h1>
+          <h1 className="text-2xl font-semibold">My Collection</h1>
           <p className="text-sm text-slate-600">
             {isFetching ? 'Refreshing…' : `${sorted.length} guitar${sorted.length === 1 ? '' : 's'}`}
           </p>

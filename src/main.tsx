@@ -12,6 +12,8 @@ import { GuitarList } from './pages/GuitarList';
 import { GuitarNew } from './pages/GuitarNew';
 import { GuitarView } from './pages/GuitarView';
 import { GuitarEdit } from './pages/GuitarEdit';
+import { UserCollectionList } from './pages/UserCollectionList';
+import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
@@ -69,6 +71,30 @@ const router = createBrowserRouter([
         element: (
           <AuthGate>
             <GuitarEdit />
+          </AuthGate>
+        ),
+      },
+      {
+        path: 'collections/:userId',
+        element: (
+          <AuthGate>
+            <UserCollectionList />
+          </AuthGate>
+        ),
+      },
+      {
+        path: 'collections/:userId/:id',
+        element: (
+          <AuthGate>
+            <GuitarView />
+          </AuthGate>
+        ),
+      },
+      {
+        path: 'profile',
+        element: (
+          <AuthGate>
+            <Profile />
           </AuthGate>
         ),
       },

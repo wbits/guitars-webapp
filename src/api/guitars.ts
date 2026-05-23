@@ -46,10 +46,11 @@ export const deleteGuitar = async (id: string): Promise<void> => {
   await apiFetch<void>({ method: 'DELETE', path: `/guitar/${encodeURIComponent(id)}` });
 };
 
-export const useGuitars = (): UseQueryResult<Guitar[]> =>
+export const useGuitars = (options?: { enabled?: boolean }): UseQueryResult<Guitar[]> =>
   useQuery({
     queryKey: QUERY_KEYS.list(),
     queryFn: ({ signal }) => listGuitars(signal),
+    enabled: options?.enabled ?? true,
   });
 
 export const useGuitar = (id: string | undefined): UseQueryResult<Guitar> =>

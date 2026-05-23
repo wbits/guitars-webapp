@@ -9,9 +9,10 @@ import { GuitarMosaicTile } from './GuitarMosaicTile';
 
 interface GuitarMosaicGridProps {
   guitars: Guitar[];
+  collectionUserId?: string;
 }
 
-export const GuitarMosaicGrid = ({ guitars }: GuitarMosaicGridProps) => {
+export const GuitarMosaicGrid = ({ guitars, collectionUserId }: GuitarMosaicGridProps) => {
   const [layoutSeed] = useState(createMosaicLayoutSeed);
   const tileSizes = useMemo(
     () => assignMosaicTileSizes(
@@ -28,7 +29,7 @@ export const GuitarMosaicGrid = ({ guitars }: GuitarMosaicGridProps) => {
 
         return (
           <li key={guitar.id} className={`min-h-0 ${mosaicTileClassName(tileSize)}`}>
-            <GuitarMosaicTile guitar={guitar} />
+            <GuitarMosaicTile guitar={guitar} collectionUserId={collectionUserId} />
           </li>
         );
       })}

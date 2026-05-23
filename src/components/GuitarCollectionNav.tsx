@@ -1,13 +1,19 @@
 import { Link } from 'react-router-dom';
 import type { Guitar } from '@/domain/guitar';
+import { guitarPath } from '@/lib/collection-routes';
 import { formatGuitarCaption } from '@/lib/guitar-cover';
 
 interface GuitarCollectionNavProps {
   previous: Guitar | null;
   next: Guitar | null;
+  collectionUserId?: string;
 }
 
-export const GuitarCollectionNav = ({ previous, next }: GuitarCollectionNavProps) => {
+export const GuitarCollectionNav = ({
+  previous,
+  next,
+  collectionUserId,
+}: GuitarCollectionNavProps) => {
   if (!previous && !next) {
     return null;
   }
@@ -19,7 +25,7 @@ export const GuitarCollectionNav = ({ previous, next }: GuitarCollectionNavProps
     >
       {previous ? (
         <Link
-          to={`/guitars/${previous.id}`}
+          to={guitarPath(previous.id, collectionUserId)}
           className="group min-h-11 touch-manipulation rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
         >
           <span className="block text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -35,7 +41,7 @@ export const GuitarCollectionNav = ({ previous, next }: GuitarCollectionNavProps
 
       {next ? (
         <Link
-          to={`/guitars/${next.id}`}
+          to={guitarPath(next.id, collectionUserId)}
           className="group min-h-11 touch-manipulation rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:text-right"
         >
           <span className="block text-xs font-medium uppercase tracking-wide text-slate-500">
