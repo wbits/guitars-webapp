@@ -24,6 +24,33 @@ const formatObservedAt = (iso: string): string => {
   }).format(date);
 };
 
+const ListingThumbnail = ({ log }: { log: MarketLog }) => {
+  const image = log.listingImageUrl?.trim();
+  if (!image) {
+    return (
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-200 text-xs text-slate-500">
+        No photo
+      </div>
+    );
+  }
+  const img = (
+    <img
+      src={image}
+      alt=""
+      loading="lazy"
+      className="h-14 w-14 shrink-0 rounded-md object-cover"
+    />
+  );
+  if (log.listingUrl) {
+    return (
+      <a href={log.listingUrl} target="_blank" rel="noreferrer" className="shrink-0">
+        {img}
+      </a>
+    );
+  }
+  return img;
+};
+
 export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -50,27 +77,32 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
             key={log.id}
             className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm"
           >
-            <div className="flex items-start justify-between gap-3">
-              <p className="font-medium text-slate-900">
-                {formatMoney(log.priceAmount, log.priceCurrency)}
-              </p>
-              <p className="text-right text-slate-500">{actionLabel[log.action]}</p>
+            <div className="flex gap-3">
+              <ListingThumbnail log={log} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium text-slate-900">
+                    {formatMoney(log.priceAmount, log.priceCurrency)}
+                  </p>
+                  <p className="text-right text-slate-500">{actionLabel[log.action]}</p>
+                </div>
+                <p className="mt-1 text-slate-700">
+                  {sourceLabel[log.source]} · {formatObservedAt(log.observedAt)}
+                </p>
+                {log.listingUrl ? (
+                  <a
+                    href={log.listingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-slate-900 underline decoration-slate-300 hover:decoration-slate-600"
+                  >
+                    {log.listingTitle?.trim() || 'View listing'}
+                  </a>
+                ) : log.listingTitle?.trim() ? (
+                  <p className="mt-2 text-slate-700">{log.listingTitle.trim()}</p>
+                ) : null}
+              </div>
             </div>
-            <p className="mt-1 text-slate-700">
-              {sourceLabel[log.source]} · {formatObservedAt(log.observedAt)}
-            </p>
-            {log.listingUrl ? (
-              <a
-                href={log.listingUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 inline-block text-slate-900 underline decoration-slate-300 hover:decoration-slate-600"
-              >
-                {log.listingTitle?.trim() || 'View listing'}
-              </a>
-            ) : log.listingTitle?.trim() ? (
-              <p className="mt-2 text-slate-700">{log.listingTitle.trim()}</p>
-            ) : null}
           </li>
         ))}
       </ul>
@@ -79,6 +111,7 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
+              <th className="py-2 pr-4 font-medium">Photo</th>
               <th className="py-2 pr-4 font-medium">Observed</th>
               <th className="py-2 pr-4 font-medium">Source</th>
               <th className="py-2 pr-4 font-medium">Status</th>
@@ -89,6 +122,9 @@ export const MarketLogList = ({ logs }: { logs: MarketLog[] }) => {
           <tbody>
             {visibleLogs.map((log) => (
               <tr key={log.id} className="border-b border-slate-100 last:border-0">
+                <td className="py-2 pr-4">
+                  <ListingThumbnail log={log} />
+                </td>
                 <td className="py-2 pr-4 whitespace-nowrap text-slate-700">
                   {formatObservedAt(log.observedAt)}
                 </td>

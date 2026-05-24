@@ -15,6 +15,7 @@ export const marketLogSchema = z.object({
   listingUrl: z.string().optional(),
   listingTitle: z.string().optional(),
   externalListingId: z.string().optional(),
+  listingImageUrl: z.string().url().optional(),
 });
 
 export type MarketLog = z.infer<typeof marketLogSchema>;

@@ -38,6 +38,21 @@ describe('<MarketLogList />', () => {
     expect(screen.getByText('Showing all 45 observations')).toBeInTheDocument();
   });
 
+  it('renders listing thumbnails when present', () => {
+    const logs: MarketLog[] = [
+      {
+        ...log(0),
+        listingImageUrl: 'https://cdn.example/images/market-logs/thumb.jpg',
+        listingUrl: 'https://reverb.com/item/1',
+      },
+    ];
+
+    render(<MarketLogList logs={logs} />);
+
+    const images = document.querySelectorAll('img[src="https://cdn.example/images/market-logs/thumb.jpg"]');
+    expect(images).toHaveLength(2);
+  });
+
   it('does not show pagination controls for short lists', () => {
     render(<MarketLogList logs={Array.from({ length: 5 }, (_, index) => log(index))} />);
 
