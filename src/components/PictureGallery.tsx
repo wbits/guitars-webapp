@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface PictureGalleryProps {
   pictures: string[];
 }
 
+const SWIPE_THRESHOLD_PX = 50;
+
 export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   const hasMultiple = pictures.length > 1;
 
   const closePreview = useCallback(() => setPreviewIndex(null), []);
@@ -23,6 +26,35 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
       return (current + 1) % pictures.length;
     });
   }, [pictures.length]);
+
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.changedTouches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      if (!hasMultiple || touchStart.current === null) {
+        return;
+      }
+
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - touchStart.current.x;
+      const deltaY = touch.clientY - touchStart.current.y;
+      touchStart.current = null;
+
+      if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX || Math.abs(deltaX) <= Math.abs(deltaY)) {
+        return;
+      }
+
+      if (deltaX < 0) {
+        showNext();
+      } else {
+        showPrevious();
+      }
+    },
+    [hasMultiple, showNext, showPrevious],
+  );
 
   useEffect(() => {
     if (previewIndex === null) return;
@@ -86,7 +118,11 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
               </button>
             ) : null}
 
-            <figure className="min-w-0">
+            <figure
+              className="min-w-0 touch-pan-y"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               <img
                 src={pictures[previewIndex]}
                 alt={`Preview ${previewIndex + 1} of ${pictures.length}`}
