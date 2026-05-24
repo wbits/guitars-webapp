@@ -127,13 +127,26 @@ export const refreshSessionToken = async (): Promise<string | null> => {
   }
 
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: string | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+
+    const timeout = window.setTimeout(() => {
+      clearRuntimeToken();
+      finish(null);
+    }, 5000);
+
     user.getSession((err: Error | null, session: CognitoUserSession | null) => {
+      window.clearTimeout(timeout);
       if (err || !session?.isValid()) {
         clearRuntimeToken();
-        resolve(null);
+        finish(null);
         return;
       }
-      resolve(storeAccessToken(session));
+      finish(storeAccessToken(session));
     });
   });
 };

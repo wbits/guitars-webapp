@@ -57,8 +57,12 @@ export const clearRuntimeToken = (): void => {
 export const getToken = (): string | null => {
   const runtime = getRuntimeToken();
   if (runtime) return runtime;
+  const buildTime = buildTimeToken();
+  // In local dev, a build-time bearer token from .env.local should work even
+  // when Cognito vars leak in from the shell (they override .env.local in Vite).
+  if (import.meta.env.DEV && buildTime) return buildTime;
   if (isCognitoEnabled()) return null;
-  return buildTimeToken();
+  return buildTime;
 };
 
 export const hasToken = (): boolean => getToken() !== null;

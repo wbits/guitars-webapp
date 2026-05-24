@@ -5,7 +5,7 @@
   "type": "module",
   "description": "React static site that drives the wbits/guitars GuitarCollection API.",
   "scripts": {
-    "dev": "vite",
+    "dev": "env -u VITE_COGNITO_REGION -u VITE_COGNITO_USER_POOL_ID -u VITE_COGNITO_CLIENT_ID -u VITE_GUITARS_API_BASE_URL vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",

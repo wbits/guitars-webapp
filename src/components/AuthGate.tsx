@@ -15,24 +15,36 @@ interface AuthGateProps {
 export const AuthGate = ({ children }: AuthGateProps) => {
   const cognito = isCognitoEnabled();
   const [checking, setChecking] = useState(cognito);
-  const [tokenPresent, setTokenPresent] = useState<boolean>(() => !cognito && hasToken());
+  const [tokenPresent, setTokenPresent] = useState<boolean>(() => hasToken());
 
   useEffect(() => {
     let cancelled = false;
 
     const recheck = () => setTokenPresent(hasToken());
 
+    const finishChecking = () => {
+      if (cancelled) return;
+      setTokenPresent(hasToken());
+      setChecking(false);
+    };
+
     const bootstrap = async () => {
-      if (cognito) {
-        const { refreshSessionToken } = await import('@/lib/cognito-auth');
-        await refreshSessionToken();
-        if (!cancelled) {
-          setTokenPresent(hasToken());
-          setChecking(false);
-        }
+      if (!cognito || hasToken()) {
+        finishChecking();
         return;
       }
-      recheck();
+
+      const safety = window.setTimeout(finishChecking, 8000);
+
+      try {
+        const { refreshSessionToken } = await import('@/lib/cognito-auth');
+        await refreshSessionToken();
+      } catch {
+        // Treat failed session restore as signed out.
+      } finally {
+        window.clearTimeout(safety);
+        finishChecking();
+      }
     };
 
     void bootstrap();

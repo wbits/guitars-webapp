@@ -1,21 +1,23 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GuitarForm } from '@/components/GuitarForm';
-import { useGuitar, useUpdateGuitar } from '@/api/guitars';
+import { useGuitar, useGuitars, useUpdateGuitar } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
 import { ApiError } from '@/api/client';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { guitarPath } from '@/lib/collection-routes';
+import { canEditGuitar } from '@/lib/guitar-ownership';
 
 export const GuitarEdit = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const guitar = useGuitar(id);
+  const myGuitars = useGuitars();
   const me = useCurrentUser();
   const update = useUpdateGuitar(id);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  if (guitar.isLoading || me.isLoading) {
+  if (guitar.isLoading || myGuitars.isLoading) {
     return <p className="text-sm text-slate-600">Loading…</p>;
   }
   if (guitar.isError || !guitar.data) {
@@ -23,9 +25,14 @@ export const GuitarEdit = () => {
   }
 
   const g = guitar.data;
-  const isOwner = Boolean(me.data?.userId && g.owner === me.data.userId);
+  const canEdit = canEditGuitar({
+    guitar: g,
+    isOwnCollectionView: true,
+    currentUserId: me.data?.userId,
+    myCollection: myGuitars.data,
+  });
 
-  if (g.owner && !isOwner) {
+  if (!canEdit) {
     return (
       <ErrorBanner
         error="You can only edit guitars in your own collection."

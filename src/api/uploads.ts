@@ -27,12 +27,18 @@ export const presignPictureUpload = async (
     signal,
   });
 
+const normalizeLocalUploadUrl = (uploadUrl: string): string => {
+  if (!import.meta.env.DEV) return uploadUrl;
+  // SAM local presigns against the Docker hostname; browsers need localhost.
+  return uploadUrl.replace('http://guitars-localstack:4566', 'http://localhost:4566');
+};
+
 export const putPictureToStorage = async (
   uploadUrl: string,
   file: File,
   signal?: AbortSignal,
 ): Promise<void> => {
-  const response = await fetch(uploadUrl, {
+  const response = await fetch(normalizeLocalUploadUrl(uploadUrl), {
     method: 'PUT',
     headers: {
       'Content-Type': file.type,

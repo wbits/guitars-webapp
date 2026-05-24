@@ -49,6 +49,22 @@ describe('uploads', () => {
     });
   });
 
+  it('putPictureToStorage rewrites LocalStack docker hostname in dev', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const file = new File(['x'], 'a.jpg', { type: 'image/jpeg' });
+    await putPictureToStorage(
+      'http://guitars-localstack:4566/guitars-local/images/guitars/a.jpg?sig=1',
+      file,
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:4566/guitars-local/images/guitars/a.jpg?sig=1',
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
   it('uploadPicture presigns then uploads', async () => {
     vi.mocked(apiFetch).mockResolvedValue({
       uploadUrl: 'https://s3.example/upload',

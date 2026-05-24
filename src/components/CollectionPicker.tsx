@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCollectionOwners } from '@/api/collections';
 import { useCurrentUser } from '@/api/me';
@@ -9,8 +9,10 @@ export const CollectionPicker = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const signedIn = hasToken();
-  const me = useCurrentUser({ enabled: signedIn });
-  const owners = useCollectionOwners({ enabled: signedIn });
+  const browsingOtherCollection = /^\/collections\/[^/]+/.test(location.pathname);
+  const [collectionsRequested, setCollectionsRequested] = useState(browsingOtherCollection);
+  const me = useCurrentUser({ enabled: signedIn && collectionsRequested });
+  const owners = useCollectionOwners({ enabled: signedIn && collectionsRequested });
 
   const selectedValue = useMemo(() => {
     const match = location.pathname.match(/^\/collections\/([^/]+)/);
@@ -40,8 +42,10 @@ export const CollectionPicker = () => {
       <select
         value={selectedValue}
         onChange={(event) => handleChange(event.target.value)}
+        onFocus={() => setCollectionsRequested(true)}
+        onPointerDown={() => setCollectionsRequested(true)}
         className="min-h-11 max-w-[14rem] touch-manipulation rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
-        disabled={owners.isLoading || me.isLoading}
+        disabled={collectionsRequested && (owners.isLoading || me.isLoading)}
       >
         <option value="__me__">My collection</option>
         {otherOwners.map((owner) => (

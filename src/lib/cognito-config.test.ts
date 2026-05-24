@@ -11,6 +11,9 @@ describe('cognito-config', () => {
   });
 
   it('is disabled when Cognito env vars are missing', async () => {
+    vi.stubEnv('VITE_COGNITO_REGION', '');
+    vi.stubEnv('VITE_COGNITO_USER_POOL_ID', '');
+    vi.stubEnv('VITE_COGNITO_CLIENT_ID', '');
     const { isCognitoEnabled } = await import('./cognito-config');
     expect(isCognitoEnabled()).toBe(false);
   });

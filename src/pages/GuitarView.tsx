@@ -9,13 +9,13 @@ import { GuitarCollectionNav } from '@/components/GuitarCollectionNav';
 import { MarketLogList } from '@/components/MarketLogList';
 import { NoImagePlaceholder } from '@/components/NoImagePlaceholder';
 import { PictureGallery } from '@/components/PictureGallery';
-import {
-  formatCollectionLabel,
+import { formatCollectionLabel,
   guitarEditPath,
   myCollectionPath,
   userCollectionPath,
 } from '@/lib/collection-routes';
 import { getGuitarNeighbors } from '@/lib/guitar-collection';
+import { canEditGuitar } from '@/lib/guitar-ownership';
 import { coverPictureUrl, formatGuitarCaption } from '@/lib/guitar-cover';
 import { formatMoney } from '@/lib/money';
 
@@ -26,13 +26,15 @@ export const GuitarView = () => {
   const myGuitars = useGuitars({ enabled: !collectionUserId });
   const userGuitars = useUserGuitars(collectionUserId, { enabled: Boolean(collectionUserId) });
   const owners = useCollectionOwners({ enabled: Boolean(collectionUserId) });
-  const me = useCurrentUser();
+  const me = useCurrentUser({ enabled: Boolean(collectionUserId) });
   const marketLogs = useMarketLogs(id);
   const del = useDeleteGuitar();
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<unknown>(null);
 
-  if (guitar.isLoading) return <p className="text-sm text-slate-600">Loading…</p>;
+  if (guitar.isLoading) {
+    return <p className="text-sm text-slate-600">Loading…</p>;
+  }
   if (guitar.isError || !guitar.data) {
     return <ErrorBanner error={guitar.error ?? 'Guitar not found'} title="Could not load guitar" />;
   }
@@ -41,9 +43,13 @@ export const GuitarView = () => {
   const collectionGuitars = collectionUserId ? (userGuitars.data ?? []) : (myGuitars.data ?? []);
   const neighbors = getGuitarNeighbors(collectionGuitars, g.id);
   const isOwnCollectionView = !collectionUserId;
-  const isOwner = Boolean(me.data?.userId && g.owner === me.data.userId);
+  const canEdit = canEditGuitar({
+    guitar: g,
+    isOwnCollectionView,
+    currentUserId: me.data?.userId,
+    myCollection: myGuitars.data,
+  });
   const isLegacyClaimable = !g.owner && isOwnCollectionView;
-  const canEdit = isOwner || isLegacyClaimable;
   const collectionOwner = owners.data?.find((entry) => entry.userId === collectionUserId);
   const collectionBackPath = collectionUserId
     ? userCollectionPath(collectionUserId)
@@ -67,44 +73,65 @@ export const GuitarView = () => {
 
   return (
     <section className="space-y-6">
-      <header className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header
+        className={`relative isolate overflow-hidden rounded-lg border border-slate-200 shadow-sm ${
+          hasCover ? 'min-h-[14rem] sm:min-h-[17rem]' : 'bg-white'
+        }`}
+      >
         {hasCover ? (
-          <div className="aspect-[21/9] max-h-64 bg-slate-100 sm:max-h-80">
-            <img
-              src={coverUrl as string}
-              alt={formatGuitarCaption(g)}
-              className="h-full w-full object-cover object-bottom"
-            />
-          </div>
+          <img
+            src={coverUrl as string}
+            alt={formatGuitarCaption(g)}
+            className="guitar-hero-cover"
+          />
         ) : (
           <div className="aspect-[21/9] max-h-48 border-b border-slate-200 bg-slate-100">
             <NoImagePlaceholder />
           </div>
         )}
 
-        <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <div
+          className={`relative z-10 flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6 ${
+            hasCover ? 'min-h-[14rem] justify-end sm:min-h-[17rem]' : ''
+          }`}
+        >
           <div className="min-w-0">
-            <p className="text-sm text-slate-500">
-              <Link to={collectionBackPath} className="hover:underline">
+            <p className={`text-sm ${hasCover ? 'text-white/80' : 'text-slate-500'}`}>
+              <Link
+                to={collectionBackPath}
+                className={hasCover ? 'hover:text-white' : 'hover:underline'}
+              >
                 {collectionBackLabel}
               </Link>
             </p>
-            <h1 className="mt-1 text-2xl font-semibold break-words text-slate-900 sm:text-3xl">
-              {g.brand} <span className="text-slate-500">{g.typeName}</span>
+            <h1
+              className={`mt-1 text-2xl font-semibold break-words sm:text-3xl ${
+                hasCover ? 'text-white' : 'text-slate-900'
+              }`}
+            >
+              {g.brand}{' '}
+              <span className={hasCover ? 'text-white/75' : 'text-slate-500'}>{g.typeName}</span>
             </h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className={`mt-1 text-sm ${hasCover ? 'text-white/85' : 'text-slate-600'}`}>
               Built {g.buildYear} · {formatMoney(g.priceAmount, g.priceCurrency)}
             </p>
           </div>
           {canEdit ? (
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:shrink-0">
-              <Link to={guitarEditPath(g.id)} className="btn-secondary w-full sm:w-auto">
+              <Link
+                to={guitarEditPath(g.id)}
+                className={`btn-secondary w-full sm:w-auto ${
+                  hasCover ? 'border-white/40 bg-white/85 hover:bg-white/95' : ''
+                }`}
+              >
                 Edit
               </Link>
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="btn-danger w-full sm:w-auto"
+                className={`btn-danger w-full sm:w-auto ${
+                  hasCover ? 'bg-red-600/85 hover:bg-red-500/90' : ''
+                }`}
               >
                 Delete
               </button>
