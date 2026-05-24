@@ -57,9 +57,14 @@
     grid-column: 1 / 1;
   }
 
+  /* Fixed-height hero so the cover crop stays consistent across viewports. */
+  .guitar-hero--cover {
+    @apply h-56 sm:h-64;
+  }
+
   /* Trim the top half of the source image, then center-crop the bottom half to fill the hero. */
   .guitar-hero-cover {
-    @apply pointer-events-none absolute inset-0 h-full w-full object-cover object-center;
+    @apply pointer-events-none absolute inset-0 h-full w-full max-h-full max-w-full object-cover object-center;
     object-view-box: inset(50% 0 0 0);
   }
 
@@ -67,11 +72,13 @@
     @apply pointer-events-none absolute inset-0 bg-slate-900/15;
   }
 
+  .guitar-hero-content {
+    @apply relative z-10 flex h-full flex-col justify-end gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6;
+  }
+
   @supports not (object-view-box: inset(50% 0 0 0)) {
     .guitar-hero-cover {
-      @apply inset-auto bottom-0 left-1/2 top-auto h-auto w-auto max-w-none -translate-x-1/2;
-      min-height: 200%;
-      min-width: 100%;
+      object-view-box: none;
     }
   }
 }

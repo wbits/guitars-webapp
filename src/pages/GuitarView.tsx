@@ -75,7 +75,7 @@ export const GuitarView = () => {
     <section className="space-y-6">
       <header
         className={`relative isolate overflow-hidden rounded-lg border border-slate-200 shadow-sm ${
-          hasCover ? 'min-h-[14rem] sm:min-h-[17rem]' : 'bg-white'
+          hasCover ? 'guitar-hero--cover' : 'bg-white'
         }`}
       >
         {hasCover ? (
@@ -93,11 +93,7 @@ export const GuitarView = () => {
           </div>
         )}
 
-        <div
-          className={`relative z-10 flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6 ${
-            hasCover ? 'min-h-[14rem] justify-end sm:min-h-[17rem]' : ''
-          }`}
-        >
+        <div className={hasCover ? 'guitar-hero-content' : 'flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6'}>
           <div className="min-w-0">
             <p className={`text-sm ${hasCover ? 'text-white/80' : 'text-slate-500'}`}>
               <Link
