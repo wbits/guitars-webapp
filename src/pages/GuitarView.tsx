@@ -93,7 +93,7 @@ export const GuitarView = () => {
   const serialNumber = g.serialNumber?.trim();
   const showBuildYear = Number.isFinite(g.buildYear) && g.buildYear >= 1800;
   const showPrice = g.priceAmount > 0;
-  const showSerialNumber = Boolean(serialNumber) && !/^n\/?a$/i.test(serialNumber);
+  const showSerialNumber = Boolean(serialNumber && !/^n\/?a$/i.test(serialNumber));
 
   const confirmDelete = async () => {
     setDeleteError(null);
@@ -211,7 +211,9 @@ export const GuitarView = () => {
           {showPrice ? (
             <Row label="Price" value={formatMoney(g.priceAmount, g.priceCurrency)} />
           ) : null}
-          {showSerialNumber ? <Row label="Serial number" value={serialNumber} /> : null}
+          {showSerialNumber && serialNumber ? (
+            <Row label="Serial number" value={serialNumber} />
+          ) : null}
           <Row label="ID" value={<code className="text-xs">{g.id}</code>} />
         </dl>
 
