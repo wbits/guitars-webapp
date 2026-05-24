@@ -67,67 +67,44 @@ export const GuitarView = () => {
 
   return (
     <section className="space-y-6">
-      <header className="relative isolate overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         {hasCover ? (
-          <>
+          <div className="aspect-[21/9] max-h-64 bg-slate-100 sm:max-h-80">
             <img
               src={coverUrl as string}
               alt={formatGuitarCaption(g)}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="h-full w-full object-cover object-bottom"
             />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/55 to-slate-950/20"
-              aria-hidden="true"
-            />
-          </>
+          </div>
         ) : (
           <div className="aspect-[21/9] max-h-48 border-b border-slate-200 bg-slate-100">
             <NoImagePlaceholder />
           </div>
         )}
 
-        <div
-          className={`relative flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6 ${
-            hasCover ? 'min-h-[14rem] justify-end sm:min-h-[17rem]' : ''
-          }`}
-        >
+        <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="min-w-0">
-            <p className={`text-sm ${hasCover ? 'text-white/80' : 'text-slate-500'}`}>
-              <Link
-                to={collectionBackPath}
-                className={hasCover ? 'hover:text-white' : 'hover:underline'}
-              >
+            <p className="text-sm text-slate-500">
+              <Link to={collectionBackPath} className="hover:underline">
                 {collectionBackLabel}
               </Link>
             </p>
-            <h1
-              className={`mt-1 text-2xl font-semibold break-words sm:text-3xl ${
-                hasCover ? 'text-white' : 'text-slate-900'
-              }`}
-            >
-              {g.brand}{' '}
-              <span className={hasCover ? 'text-white/75' : 'text-slate-500'}>{g.typeName}</span>
+            <h1 className="mt-1 text-2xl font-semibold break-words text-slate-900 sm:text-3xl">
+              {g.brand} <span className="text-slate-500">{g.typeName}</span>
             </h1>
-            <p className={`mt-1 text-sm ${hasCover ? 'text-white/85' : 'text-slate-600'}`}>
+            <p className="mt-1 text-sm text-slate-600">
               Built {g.buildYear} · {formatMoney(g.priceAmount, g.priceCurrency)}
             </p>
           </div>
           {canEdit ? (
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:shrink-0">
-              <Link
-                to={guitarEditPath(g.id)}
-                className={`btn-secondary w-full sm:w-auto ${
-                  hasCover ? 'border-white/40 bg-white/85 hover:bg-white/95' : ''
-                }`}
-              >
+              <Link to={guitarEditPath(g.id)} className="btn-secondary w-full sm:w-auto">
                 Edit
               </Link>
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className={`btn-danger w-full sm:w-auto ${
-                  hasCover ? 'bg-red-600/85 hover:bg-red-500/90' : ''
-                }`}
+                className="btn-danger w-full sm:w-auto"
               >
                 Delete
               </button>
