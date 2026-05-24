@@ -90,6 +90,10 @@ export const GuitarView = () => {
     : '← Back to collection';
   const coverUrl = coverPictureUrl(g);
   const hasCover = Boolean(coverUrl);
+  const serialNumber = g.serialNumber?.trim();
+  const showBuildYear = Number.isFinite(g.buildYear) && g.buildYear >= 1800;
+  const showPrice = g.priceAmount > 0;
+  const showSerialNumber = Boolean(serialNumber) && !/^n\/?a$/i.test(serialNumber);
 
   const confirmDelete = async () => {
     setDeleteError(null);
@@ -203,16 +207,15 @@ export const GuitarView = () => {
 
       <div className="grid gap-6 md:grid-cols-2">
         <dl className="rounded-md border border-slate-200 bg-white p-5 text-sm shadow-sm">
-          <Row label="Brand" value={g.brand} />
-          <Row label="Type" value={g.typeName} />
-          <Row label="Build year" value={String(g.buildYear)} />
-          <Row label="Price" value={formatMoney(g.priceAmount, g.priceCurrency)} />
-          <Row label="Serial number" value={g.serialNumber ?? '—'} />
+          {showBuildYear ? <Row label="Build year" value={String(g.buildYear)} /> : null}
+          {showPrice ? (
+            <Row label="Price" value={formatMoney(g.priceAmount, g.priceCurrency)} />
+          ) : null}
+          {showSerialNumber ? <Row label="Serial number" value={serialNumber} /> : null}
           <Row label="ID" value={<code className="text-xs">{g.id}</code>} />
         </dl>
 
         <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">Description</h2>
           {g.description ? (
             <p className="whitespace-pre-wrap text-sm text-slate-800">{g.description}</p>
           ) : (
