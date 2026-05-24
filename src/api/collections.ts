@@ -1,7 +1,8 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { z } from 'zod';
 import { guitarListSchema, type Guitar } from '@/domain/guitar';
 import { apiFetch } from './client';
+import { marketLogQueryKeys } from './marketLogs';
 
 const collectionOwnerSchema = z.object({
   userId: z.string(),
@@ -9,6 +10,11 @@ const collectionOwnerSchema = z.object({
   email: z.string().optional(),
   displayName: z.string(),
   guitarCount: z.number().int().nonnegative(),
+  marketCrawlEnabled: z.boolean().optional().default(false),
+});
+
+const clearCollectionMarketLogsResponseSchema = z.object({
+  deletedCount: z.number().int().nonnegative(),
 });
 
 const collectionOwnerListSchema = z.array(collectionOwnerSchema);
@@ -50,5 +56,23 @@ export const useUserGuitars = (
     queryFn: ({ signal }) => listUserGuitars(userId as string, signal),
     enabled: Boolean(userId) && (options?.enabled ?? true),
   });
+
+export const clearCollectionMarketLogs = async (userId: string): Promise<number> => {
+  const raw = await apiFetch<unknown>({
+    method: 'DELETE',
+    path: `/collections/${encodeURIComponent(userId)}/market-log`,
+  });
+  return clearCollectionMarketLogsResponseSchema.parse(raw).deletedCount;
+};
+
+export const useClearCollectionMarketLogs = (userId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => clearCollectionMarketLogs(userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: marketLogQueryKeys.all });
+    },
+  });
+};
 
 export const collectionQueryKeys = QUERY_KEYS;

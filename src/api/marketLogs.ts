@@ -25,3 +25,5 @@ export const useMarketLogs = (guitarId: string | undefined): UseQueryResult<Mark
     queryFn: ({ signal }) => listMarketLogs(guitarId as string, signal),
     enabled: Boolean(guitarId),
   });
+
+export const marketLogQueryKeys = QUERY_KEYS;

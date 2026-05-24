@@ -12,6 +12,7 @@ const meSchema = z.object({
   username: z.string().optional(),
   email: z.string().optional(),
   displayName: z.string(),
+  isAdmin: z.boolean().optional().default(false),
 });
 
 export type CurrentUser = z.infer<typeof meSchema>;
