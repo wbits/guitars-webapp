@@ -93,8 +93,14 @@ export const GuitarView = () => {
           </div>
         )}
 
-        <div className={hasCover ? 'guitar-hero-content' : 'flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6'}>
-          <div className="min-w-0">
+        <div
+          className={
+            hasCover
+              ? 'guitar-hero-content'
+              : 'relative flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6'
+          }
+        >
+          <div className={`min-w-0 ${canEdit ? 'pr-32 sm:pr-0' : ''}`}>
             <p className={`text-sm ${hasCover ? 'text-white/80' : 'text-slate-500'}`}>
               <Link
                 to={collectionBackPath}
@@ -116,10 +122,10 @@ export const GuitarView = () => {
             </p>
           </div>
           {canEdit ? (
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:shrink-0">
+            <div className="absolute bottom-3 right-3 z-20 flex flex-row gap-1.5 sm:relative sm:bottom-auto sm:right-auto sm:shrink-0 sm:gap-2">
               <Link
                 to={guitarEditPath(g.id)}
-                className={`btn-secondary w-full sm:w-auto ${
+                className={`btn-secondary !min-h-8 px-2.5 py-1 text-xs sm:!min-h-11 sm:px-4 sm:py-2 sm:text-sm ${
                   hasCover ? 'border-white/40 bg-white/85 hover:bg-white/95' : ''
                 }`}
               >
@@ -128,7 +134,7 @@ export const GuitarView = () => {
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className={`btn-danger w-full sm:w-auto ${
+                className={`btn-danger !min-h-8 px-2.5 py-1 text-xs sm:!min-h-11 sm:px-4 sm:py-2 sm:text-sm ${
                   hasCover ? 'bg-red-600/85 hover:bg-red-500/90' : ''
                 }`}
               >
