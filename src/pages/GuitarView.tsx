@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useCollectionOwners, useUserGuitars } from '@/api/collections';
 import { useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
@@ -9,8 +9,11 @@ import { GuitarCollectionNav } from '@/components/GuitarCollectionNav';
 import { MarketLogList } from '@/components/MarketLogList';
 import { NoImagePlaceholder } from '@/components/NoImagePlaceholder';
 import { PictureGallery } from '@/components/PictureGallery';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { useSwipeNavigation } from '@/hooks/use-swipe-navigation';
 import { formatCollectionLabel,
   guitarEditPath,
+  guitarPath,
   myCollectionPath,
   userCollectionPath,
 } from '@/lib/collection-routes';
@@ -31,6 +34,36 @@ export const GuitarView = () => {
   const del = useDeleteGuitar();
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<unknown>(null);
+  const isMobile = useMediaQuery('(max-width: 639px)');
+
+  const collectionGuitars = collectionUserId ? (userGuitars.data ?? []) : (myGuitars.data ?? []);
+  const neighbors = guitar.data
+    ? getGuitarNeighbors(collectionGuitars, guitar.data.id)
+    : { previous: null, next: null };
+
+  const goToPrevious = useCallback(() => {
+    if (neighbors.previous) {
+      navigate(guitarPath(neighbors.previous.id, collectionUserId));
+    }
+  }, [collectionUserId, navigate, neighbors.previous]);
+
+  const goToNext = useCallback(() => {
+    if (neighbors.next) {
+      navigate(guitarPath(neighbors.next.id, collectionUserId));
+    }
+  }, [collectionUserId, navigate, neighbors.next]);
+
+  const swipeEnabled =
+    isMobile &&
+    !confirming &&
+    Boolean(guitar.data) &&
+    Boolean(neighbors.previous || neighbors.next);
+
+  const { onTouchStart, onTouchEnd } = useSwipeNavigation({
+    enabled: swipeEnabled,
+    onSwipeLeft: goToNext,
+    onSwipeRight: goToPrevious,
+  });
 
   if (guitar.isLoading) {
     return <p className="text-sm text-slate-600">Loading…</p>;
@@ -40,8 +73,6 @@ export const GuitarView = () => {
   }
 
   const g = guitar.data;
-  const collectionGuitars = collectionUserId ? (userGuitars.data ?? []) : (myGuitars.data ?? []);
-  const neighbors = getGuitarNeighbors(collectionGuitars, g.id);
   const isOwnCollectionView = !collectionUserId;
   const canEdit = canEditGuitar({
     guitar: g,
@@ -72,7 +103,11 @@ export const GuitarView = () => {
   };
 
   return (
-    <section className="space-y-6">
+    <section
+      className="space-y-6 touch-pan-y"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <header
         className={`relative isolate overflow-hidden rounded-lg border border-slate-200 shadow-sm ${
           hasCover ? 'guitar-hero--cover' : 'bg-white'

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getHorizontalSwipeDirection } from '@/lib/swipe';
 
 interface PictureGalleryProps {
   pictures: string[];
 }
-
-const SWIPE_THRESHOLD_PX = 50;
 
 export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
@@ -28,7 +27,10 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
   }, [pictures.length]);
 
   const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    const touch = event.changedTouches[0];
+    const touch = event.touches[0] ?? event.changedTouches[0];
+    if (!touch) {
+      return;
+    }
     touchStart.current = { x: touch.clientX, y: touch.clientY };
   }, []);
 
@@ -39,17 +41,19 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
       }
 
       const touch = event.changedTouches[0];
-      const deltaX = touch.clientX - touchStart.current.x;
-      const deltaY = touch.clientY - touchStart.current.y;
-      touchStart.current = null;
-
-      if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      if (!touch) {
         return;
       }
 
-      if (deltaX < 0) {
+      const direction = getHorizontalSwipeDirection(touchStart.current, {
+        x: touch.clientX,
+        y: touch.clientY,
+      });
+      touchStart.current = null;
+
+      if (direction === 'left') {
         showNext();
-      } else {
+      } else if (direction === 'right') {
         showPrevious();
       }
     },

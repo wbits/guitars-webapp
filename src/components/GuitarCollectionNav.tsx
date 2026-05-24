@@ -21,7 +21,7 @@ export const GuitarCollectionNav = ({
   return (
     <nav
       aria-label="Collection navigation"
-      className="grid gap-3 border-y border-slate-200 py-3 sm:grid-cols-2"
+      className="hidden gap-3 border-y border-slate-200 py-3 sm:grid sm:grid-cols-2"
     >
       {previous ? (
         <Link
