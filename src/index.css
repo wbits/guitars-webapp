@@ -63,6 +63,10 @@
     object-view-box: inset(50% 0 0 0);
   }
 
+  .guitar-hero-overlay {
+    @apply pointer-events-none absolute inset-0 bg-slate-900/15;
+  }
+
   @supports not (object-view-box: inset(50% 0 0 0)) {
     .guitar-hero-cover {
       @apply inset-auto bottom-0 left-1/2 top-auto h-auto w-auto max-w-none -translate-x-1/2;

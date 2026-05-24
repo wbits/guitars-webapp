@@ -79,11 +79,14 @@ export const GuitarView = () => {
         }`}
       >
         {hasCover ? (
-          <img
-            src={coverUrl as string}
-            alt={formatGuitarCaption(g)}
-            className="guitar-hero-cover"
-          />
+          <>
+            <img
+              src={coverUrl as string}
+              alt={formatGuitarCaption(g)}
+              className="guitar-hero-cover"
+            />
+            <div className="guitar-hero-overlay" aria-hidden />
+          </>
         ) : (
           <div className="aspect-[21/9] max-h-48 border-b border-slate-200 bg-slate-100">
             <NoImagePlaceholder />
