@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { notifyTokenChanged } from '@/lib/auth-events';
+import { Link, useNavigate } from 'react-router-dom';
 import { isCognitoEnabled } from '@/lib/cognito-config';
+import { logout } from '@/lib/logout';
 import {
-  clearRuntimeToken,
   getRuntimeToken,
   RUNTIME_TOKEN_KEY,
   setRuntimeToken,
@@ -15,6 +14,7 @@ const mask = (token: string): string => {
 };
 
 export const Settings = () => {
+  const navigate = useNavigate();
   const cognito = isCognitoEnabled();
   const [current, setCurrent] = useState<string | null>(() => getRuntimeToken());
   const [draft, setDraft] = useState('');
@@ -29,18 +29,14 @@ export const Settings = () => {
     setCurrent(getRuntimeToken());
     setDraft('');
     setSaved(true);
-    notifyTokenChanged();
     setTimeout(() => setSaved(false), 2000);
   };
 
   const clear = () => {
-    if (cognito) {
-      void import('@/lib/cognito-auth').then(({ signOut }) => signOut());
-    } else {
-      clearRuntimeToken();
-    }
-    setCurrent(null);
-    notifyTokenChanged();
+    void logout().then(() => {
+      setCurrent(null);
+      if (cognito) navigate('/login', { replace: true });
+    });
   };
 
   return (

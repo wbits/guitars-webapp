@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { CollectionPicker } from '@/components/CollectionPicker';
-import { notifyTokenChanged } from '@/lib/auth-events';
+import { useAuthSession } from '@/hooks/use-auth-session';
 import { isCognitoEnabled } from '@/lib/cognito-config';
-import { clearRuntimeToken, hasToken } from '@/lib/token';
+import { logout } from '@/lib/logout';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex min-h-11 touch-manipulation items-center rounded-md px-3 py-2 text-sm font-medium ${
@@ -15,26 +14,12 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export const App = () => {
   const navigate = useNavigate();
   const cognito = isCognitoEnabled();
-  const [signedIn, setSignedIn] = useState(() => hasToken());
+  const signedIn = useAuthSession();
 
-  useEffect(() => {
-    const recheck = () => setSignedIn(hasToken());
-    window.addEventListener('guitars:token-changed', recheck);
-    window.addEventListener('storage', recheck);
-    return () => {
-      window.removeEventListener('guitars:token-changed', recheck);
-      window.removeEventListener('storage', recheck);
-    };
-  }, []);
-
-  const logout = () => {
-    if (cognito) {
-      void import('@/lib/cognito-auth').then(({ signOut }) => signOut());
-    } else {
-      clearRuntimeToken();
-    }
-    notifyTokenChanged();
-    navigate(cognito ? '/login' : '/settings', { replace: true });
+  const signOut = () => {
+    void logout().then(() => {
+      navigate(cognito ? '/login' : '/settings', { replace: true });
+    });
   };
 
   return (
@@ -59,7 +44,7 @@ export const App = () => {
             ) : null}
             {cognito ? (
               signedIn ? (
-                <button type="button" onClick={logout} className="btn-secondary">
+                <button type="button" onClick={signOut} className="btn-secondary">
                   Sign out
                 </button>
               ) : (

@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/client';
 import { useCurrentUser, useUpdateProfile } from '@/api/me';
 import { ErrorBanner } from '@/components/ErrorBanner';
+import { isCognitoEnabled } from '@/lib/cognito-config';
+import { logout } from '@/lib/logout';
 
 export const Profile = () => {
+  const navigate = useNavigate();
+  const cognito = isCognitoEnabled();
   const me = useCurrentUser();
   const update = useUpdateProfile();
   const [username, setUsername] = useState('');
@@ -94,6 +98,24 @@ export const Profile = () => {
           </Link>
         </div>
       </form>
+
+      {cognito ? (
+        <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-base font-semibold text-slate-900">Sign out</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            End your session on this device and return to the sign-in page.
+          </p>
+          <button
+            type="button"
+            className="btn-secondary mt-4"
+            onClick={() => {
+              void logout().then(() => navigate('/login', { replace: true }));
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 };

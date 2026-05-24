@@ -9,6 +9,7 @@
  */
 
 import { isCognitoEnabled } from '@/lib/cognito-config';
+import { notifyTokenChanged } from '@/lib/auth-events';
 
 export const RUNTIME_TOKEN_KEY = 'guitars:bearerToken';
 
@@ -41,17 +42,22 @@ export const setRuntimeToken = (token: string): void => {
   const store = safeSessionStorage();
   if (!store) return;
   const trimmed = token.trim();
+  const previous = store.getItem(RUNTIME_TOKEN_KEY);
   if (trimmed === '') {
     store.removeItem(RUNTIME_TOKEN_KEY);
+    if (previous !== null) notifyTokenChanged();
     return;
   }
   store.setItem(RUNTIME_TOKEN_KEY, trimmed);
+  if (previous !== trimmed) notifyTokenChanged();
 };
 
 export const clearRuntimeToken = (): void => {
   const store = safeSessionStorage();
   if (!store) return;
+  const hadToken = store.getItem(RUNTIME_TOKEN_KEY) !== null;
   store.removeItem(RUNTIME_TOKEN_KEY);
+  if (hadToken) notifyTokenChanged();
 };
 
 export const getToken = (): string | null => {

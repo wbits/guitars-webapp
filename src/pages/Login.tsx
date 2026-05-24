@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cognitoErrorMessage } from '@/lib/cognito-errors';
 import { signIn } from '@/lib/cognito-auth';
 import { isCognitoEnabled } from '@/lib/cognito-config';
-import { notifyTokenChanged } from '@/lib/auth-events';
-import { hasToken } from '@/lib/token';
+import { useAuthSession } from '@/hooks/use-auth-session';
+import { logout } from '@/lib/logout';
 
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const signedIn = useAuthSession();
   const registered = (location.state as { registered?: boolean } | null)?.registered === true;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,8 +31,30 @@ export const Login = () => {
     );
   }
 
-  if (hasToken()) {
-    return <Navigate to="/guitars" replace />;
+  if (signedIn) {
+    return (
+      <section className="mx-auto max-w-md space-y-4 rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold">Already signed in</h1>
+        <p className="text-sm text-slate-600">
+          You are already signed in to this device. Open your collection or sign out to use a
+          different account.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link to="/guitars" className="btn-primary">
+            Go to collection
+          </Link>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              void logout().then(() => navigate('/login', { replace: true }));
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      </section>
+    );
   }
 
   const submit = async (e: React.FormEvent) => {
@@ -40,7 +63,6 @@ export const Login = () => {
     setSubmitting(true);
     try {
       await signIn(email, password);
-      notifyTokenChanged();
       navigate('/guitars', { replace: true });
     } catch (err) {
       setError(cognitoErrorMessage(err));
