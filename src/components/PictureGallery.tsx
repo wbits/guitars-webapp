@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { getHorizontalSwipeDirection } from '@/lib/swipe';
 
 interface PictureGalleryProps {
   pictures: string[];
 }
 
+const SWIPE_NAVIGATION_MEDIA_QUERY = '(max-width: 639px)';
+
 export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const hasMultiple = pictures.length > 1;
+  const swipeNavigation = useMediaQuery(SWIPE_NAVIGATION_MEDIA_QUERY);
+  const showPreviewButtons = hasMultiple && !swipeNavigation;
 
   const closePreview = useCallback(() => setPreviewIndex(null), []);
 
@@ -105,13 +110,19 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
           aria-modal="true"
           aria-label="Picture preview"
           onClick={closePreview}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 sm:p-6"
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/75 ${
+            swipeNavigation ? 'p-2' : 'p-4 sm:p-6'
+          }`}
         >
           <div
-            className="flex max-w-full items-center gap-2 sm:gap-4"
+            className={
+              swipeNavigation
+                ? 'flex w-full max-w-full justify-center'
+                : 'flex max-w-full items-center gap-2 sm:gap-4'
+            }
             onClick={(e) => e.stopPropagation()}
           >
-            {hasMultiple ? (
+            {showPreviewButtons ? (
               <button
                 type="button"
                 onClick={showPrevious}
@@ -123,14 +134,18 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
             ) : null}
 
             <figure
-              className="min-w-0 touch-pan-y"
+              className={`min-w-0 touch-pan-y ${swipeNavigation ? 'w-full' : ''}`}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
               <img
                 src={pictures[previewIndex]}
                 alt={`Preview ${previewIndex + 1} of ${pictures.length}`}
-                className="max-h-[calc(100dvh-2rem)] max-w-full rounded-md shadow-2xl"
+                className={
+                  swipeNavigation
+                    ? 'mx-auto max-h-[calc(100dvh-4.5rem)] w-full max-w-full object-contain rounded-md shadow-2xl'
+                    : 'max-h-[calc(100dvh-2rem)] max-w-full rounded-md shadow-2xl'
+                }
               />
               {hasMultiple ? (
                 <figcaption className="mt-2 text-center text-sm text-white/90">
@@ -139,7 +154,7 @@ export const PictureGallery = ({ pictures }: PictureGalleryProps) => {
               ) : null}
             </figure>
 
-            {hasMultiple ? (
+            {showPreviewButtons ? (
               <button
                 type="button"
                 onClick={showNext}
