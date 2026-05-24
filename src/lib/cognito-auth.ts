@@ -37,7 +37,8 @@ const getUserPool = async (): Promise<CognitoUserPool> => {
 };
 
 const storeAccessToken = (session: CognitoUserSession): string => {
-  const token = session.getAccessToken().getJwtToken();
+  // ID tokens carry cognito:groups; access tokens do not.
+  const token = session.getIdToken().getJwtToken();
   setRuntimeToken(token);
   return token;
 };
