@@ -114,13 +114,20 @@ export const GuitarView = () => {
           </div>
           {canEdit ? (
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:shrink-0">
-              <Link to={guitarEditPath(g.id)} className="btn-secondary w-full sm:w-auto">
+              <Link
+                to={guitarEditPath(g.id)}
+                className={`btn-secondary w-full sm:w-auto ${
+                  hasCover ? 'border-white/40 bg-white/85 hover:bg-white/95' : ''
+                }`}
+              >
                 Edit
               </Link>
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                className="btn-danger w-full sm:w-auto"
+                className={`btn-danger w-full sm:w-auto ${
+                  hasCover ? 'bg-red-600/85 hover:bg-red-500/90' : ''
+                }`}
               >
                 Delete
               </button>
