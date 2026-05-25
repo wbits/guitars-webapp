@@ -46,6 +46,9 @@ export const guitarFieldsSchema = z.object({
   pictures: z.array(absoluteUrl).default([]),
   coverPictureIndex: z.number().int().min(0).default(0),
   serialNumber: optionalTrimmed,
+  color: optionalTrimmed,
+  country: optionalTrimmed,
+  factory: optionalTrimmed,
   description: optionalTrimmed,
 });
 

@@ -19,6 +19,7 @@ import { formatCollectionLabel,
   userCollectionPath,
 } from '@/lib/collection-routes';
 import { getGuitarNeighbors } from '@/lib/guitar-collection';
+import { hasDisplayValue } from '@/lib/guitar-display';
 import { canEditGuitar } from '@/lib/guitar-ownership';
 import { coverPictureUrl, formatGuitarCaption } from '@/lib/guitar-cover';
 
@@ -91,8 +92,14 @@ export const GuitarView = () => {
   const coverUrl = coverPictureUrl(g);
   const hasCover = Boolean(coverUrl);
   const serialNumber = g.serialNumber?.trim();
+  const color = g.color?.trim();
+  const country = g.country?.trim();
+  const factory = g.factory?.trim();
   const showBuildYear = Number.isFinite(g.buildYear) && g.buildYear >= 1800;
   const showSerialNumber = Boolean(serialNumber && !/^n\/?a$/i.test(serialNumber));
+  const showColor = hasDisplayValue(color);
+  const showCountry = hasDisplayValue(country);
+  const showFactory = hasDisplayValue(factory);
 
   const confirmDelete = async () => {
     setDeleteError(null);
@@ -212,6 +219,9 @@ export const GuitarView = () => {
           {showSerialNumber && serialNumber ? (
             <Row label="Serial number" value={serialNumber} />
           ) : null}
+          {showColor && color ? <Row label="Color" value={color} /> : null}
+          {showCountry && country ? <Row label="Country (made in)" value={country} /> : null}
+          {showFactory && factory ? <Row label="Factory" value={factory} /> : null}
           <Row label="ID" value={<code className="text-xs">{g.id}</code>} />
         </dl>
 

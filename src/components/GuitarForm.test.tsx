@@ -8,6 +8,28 @@ vi.mock('@/api/uploads', () => ({
   validatePictureFile: vi.fn(() => null),
 }));
 
+vi.mock('@/components/RichTextEditor', () => ({
+  RichTextEditor: ({
+    id,
+    value,
+    onChange,
+    onBlur,
+  }: {
+    id?: string;
+    value: string;
+    onChange: (value: string) => void;
+    onBlur?: () => void;
+  }) => (
+    <textarea
+      id={id}
+      aria-label="Description"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={onBlur}
+    />
+  ),
+}));
+
 import { uploadPicture } from '@/api/uploads';
 
 describe('<GuitarForm />', () => {

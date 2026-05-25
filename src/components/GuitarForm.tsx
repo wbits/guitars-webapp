@@ -9,7 +9,9 @@ import {
   type GuitarInput,
 } from '@/domain/guitar';
 import { uploadPicture, validatePictureFile } from '@/api/uploads';
+import { normalizeRichTextForSubmit } from '@/lib/rich-text';
 import { MoneyInput } from './MoneyInput';
+import { RichTextEditor } from './RichTextEditor';
 
 export interface GuitarFormProps {
   initialValues?: Partial<GuitarInput>;
@@ -34,6 +36,7 @@ const formSchema = guitarFieldsSchema
   .transform((value) => ({
     ...value,
     pictures: value.pictures.map((p) => p.url),
+    description: normalizeRichTextForSubmit(value.description),
   }))
   .pipe(guitarInputSchema);
 
@@ -46,6 +49,9 @@ type FormShape = {
   pictures: { url: string }[];
   coverPictureIndex: number;
   serialNumber?: string;
+  color?: string;
+  country?: string;
+  factory?: string;
   description?: string;
 };
 
@@ -58,6 +64,9 @@ const toFormShape = (v: Partial<GuitarInput> | undefined): FormShape => ({
   pictures: (v?.pictures ?? []).map((url) => ({ url })),
   coverPictureIndex: v?.coverPictureIndex ?? 0,
   serialNumber: v?.serialNumber ?? '',
+  color: v?.color ?? '',
+  country: v?.country ?? '',
+  factory: v?.factory ?? '',
   description: v?.description ?? '',
 });
 
@@ -195,6 +204,40 @@ export const GuitarForm = ({
         </div>
 
         <div>
+          <label htmlFor="color" className="label">
+            Color
+          </label>
+          <input id="color" className="input" aria-invalid={Boolean(errors.color)} {...register('color')} />
+          <p className="help">Optional.</p>
+        </div>
+
+        <div>
+          <label htmlFor="country" className="label">
+            Country (made in)
+          </label>
+          <input
+            id="country"
+            className="input"
+            aria-invalid={Boolean(errors.country)}
+            {...register('country')}
+          />
+          <p className="help">Optional.</p>
+        </div>
+
+        <div>
+          <label htmlFor="factory" className="label">
+            Factory
+          </label>
+          <input
+            id="factory"
+            className="input"
+            aria-invalid={Boolean(errors.factory)}
+            {...register('factory')}
+          />
+          <p className="help">Optional.</p>
+        </div>
+
+        <div>
           <label htmlFor="priceAmount" className="label">
             Price
           </label>
@@ -243,12 +286,23 @@ export const GuitarForm = ({
         <label htmlFor="description" className="label">
           Description
         </label>
-        <textarea
-          id="description"
-          rows={3}
-          className="input"
-          {...register('description')}
+        <Controller
+          control={control}
+          name="description"
+          render={({ field }) => (
+            <RichTextEditor
+              id="description"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={submitting || isUploading}
+              aria-invalid={Boolean(errors.description)}
+            />
+          )}
         />
+        {errors.description ? (
+          <p className="error-text">{errors.description.message}</p>
+        ) : null}
       </div>
 
       <fieldset>

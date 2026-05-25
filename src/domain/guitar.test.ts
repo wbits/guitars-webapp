@@ -107,11 +107,17 @@ describe('guitarInputSchema', () => {
     const result = guitarInputSchema.safeParse({
       ...validPayload(),
       serialNumber: '   ',
+      color: '   ',
+      country: '   ',
+      factory: '   ',
       description: '',
     });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.serialNumber).toBeUndefined();
+      expect(result.data.color).toBeUndefined();
+      expect(result.data.country).toBeUndefined();
+      expect(result.data.factory).toBeUndefined();
       expect(result.data.description).toBeUndefined();
     }
   });
