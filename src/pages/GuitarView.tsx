@@ -20,7 +20,6 @@ import { formatCollectionLabel,
 import { getGuitarNeighbors } from '@/lib/guitar-collection';
 import { canEditGuitar } from '@/lib/guitar-ownership';
 import { coverPictureUrl, formatGuitarCaption } from '@/lib/guitar-cover';
-import { formatMoney } from '@/lib/money';
 
 export const GuitarView = () => {
   const { id = '', userId: collectionUserId } = useParams<{ id: string; userId?: string }>();
@@ -92,7 +91,6 @@ export const GuitarView = () => {
   const hasCover = Boolean(coverUrl);
   const serialNumber = g.serialNumber?.trim();
   const showBuildYear = Number.isFinite(g.buildYear) && g.buildYear >= 1800;
-  const showPrice = g.priceAmount > 0;
   const showSerialNumber = Boolean(serialNumber && !/^n\/?a$/i.test(serialNumber));
 
   const confirmDelete = async () => {
@@ -156,9 +154,11 @@ export const GuitarView = () => {
               {g.brand}{' '}
               <span className={hasCover ? 'text-white/75' : 'text-slate-500'}>{g.typeName}</span>
             </h1>
-            <p className={`mt-1 text-sm ${hasCover ? 'text-white/85' : 'text-slate-600'}`}>
-              Built {g.buildYear} · {formatMoney(g.priceAmount, g.priceCurrency)}
-            </p>
+            {showBuildYear ? (
+              <p className={`mt-1 text-sm ${hasCover ? 'text-white/85' : 'text-slate-600'}`}>
+                Built {g.buildYear}
+              </p>
+            ) : null}
           </div>
           {canEdit ? (
             <div className="absolute bottom-3 right-3 z-20 flex flex-row gap-1.5 sm:relative sm:bottom-auto sm:right-auto sm:shrink-0 sm:gap-2">
@@ -208,9 +208,6 @@ export const GuitarView = () => {
       <div className="grid gap-6 md:grid-cols-2">
         <dl className="rounded-md border border-slate-200 bg-white p-5 text-sm shadow-sm">
           {showBuildYear ? <Row label="Build year" value={String(g.buildYear)} /> : null}
-          {showPrice ? (
-            <Row label="Price" value={formatMoney(g.priceAmount, g.priceCurrency)} />
-          ) : null}
           {showSerialNumber && serialNumber ? (
             <Row label="Serial number" value={serialNumber} />
           ) : null}
