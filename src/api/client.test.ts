@@ -95,6 +95,63 @@ describe('apiFetch', () => {
     expect(caught).toBeInstanceOf(ApiError);
   });
 
+  it('clears the runtime token and notifies session invalidation on 401', async () => {
+    vi.doMock('@/lib/cognito-config', () => ({
+      isCognitoEnabled: () => false,
+      cognitoUserPoolId: () => null,
+      cognitoClientId: () => null,
+    }));
+
+    const { RUNTIME_TOKEN_KEY } = await import('@/lib/token');
+    sessionStorage.setItem(RUNTIME_TOKEN_KEY, 'expired-token');
+    const invalidated = vi.fn();
+    window.addEventListener('guitars:session-invalidated', invalidated);
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { apiFetch } = await import('./client');
+
+    await expect(apiFetch({ path: '/guitar' })).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 401,
+    });
+
+    await vi.waitFor(() => {
+      expect(sessionStorage.getItem(RUNTIME_TOKEN_KEY)).toBeNull();
+      expect(invalidated).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not invalidate the session on 403', async () => {
+    const { RUNTIME_TOKEN_KEY } = await import('@/lib/token');
+    sessionStorage.setItem(RUNTIME_TOKEN_KEY, 'valid-token');
+    const invalidated = vi.fn();
+    window.addEventListener('guitars:session-invalidated', invalidated);
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: 'forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { apiFetch } = await import('./client');
+
+    await expect(apiFetch({ path: '/collections/other/market-crawl' })).rejects.toMatchObject({
+      status: 403,
+    });
+
+    expect(sessionStorage.getItem(RUNTIME_TOKEN_KEY)).toBe('valid-token');
+    expect(invalidated).not.toHaveBeenCalled();
+  });
+
   it('throws MissingTokenError when no token is configured', async () => {
     vi.stubEnv(ENV_KEY, '');
     sessionStorage.clear();

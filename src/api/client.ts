@@ -1,3 +1,4 @@
+import { invalidateSession, isUnauthorizedStatus } from '@/lib/invalidate-session';
 import { getToken } from '@/lib/token';
 
 const API_BASE_URL: string = (() => {
@@ -90,6 +91,9 @@ export const apiFetch = async <T = unknown>({
   }
 
   if (!response.ok) {
+    if (isUnauthorizedStatus(response.status)) {
+      void invalidateSession();
+    }
     throw new ApiError(response.status, parseErrorMessage(response.status, parsed), parsed);
   }
 

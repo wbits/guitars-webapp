@@ -4,11 +4,13 @@ import { clearRuntimeToken } from '@/lib/token';
 
 /** Clears the Cognito session (when enabled) and the runtime API token. */
 export const logout = async (): Promise<void> => {
+  clearRuntimeToken();
+  notifyTokenChanged();
+
   if (isCognitoEnabled()) {
     const { signOut } = await import('@/lib/cognito-auth');
     await signOut();
-  } else {
-    clearRuntimeToken();
   }
+
   notifyTokenChanged();
 };

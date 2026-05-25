@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { CollectionPicker } from '@/components/CollectionPicker';
 import { useAuthSession } from '@/hooks/use-auth-session';
@@ -21,6 +22,14 @@ export const App = () => {
       navigate(cognito ? '/login' : '/settings', { replace: true });
     });
   };
+
+  useEffect(() => {
+    const redirectToSignIn = () => {
+      navigate(cognito ? '/login' : '/settings', { replace: true });
+    };
+    window.addEventListener('guitars:session-invalidated', redirectToSignIn);
+    return () => window.removeEventListener('guitars:session-invalidated', redirectToSignIn);
+  }, [cognito, navigate]);
 
   return (
     <div className="min-h-screen">
