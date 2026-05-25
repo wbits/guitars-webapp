@@ -5,6 +5,7 @@ import { useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
 import { useMarketLogs } from '@/api/marketLogs';
 import { ErrorBanner } from '@/components/ErrorBanner';
+import { ExpandableText } from '@/components/ExpandableText';
 import { GuitarCollectionNav } from '@/components/GuitarCollectionNav';
 import { MarketLogList } from '@/components/MarketLogList';
 import { NoImagePlaceholder } from '@/components/NoImagePlaceholder';
@@ -216,7 +217,7 @@ export const GuitarView = () => {
 
         <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
           {g.description ? (
-            <p className="whitespace-pre-wrap text-sm text-slate-800">{g.description}</p>
+            <ExpandableText text={g.description} />
           ) : (
             <p className="text-sm text-slate-500">No description provided.</p>
           )}
