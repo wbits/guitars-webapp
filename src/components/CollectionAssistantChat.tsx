@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ApiError } from '@/api/client';
 import { postAssistantChat, toCollectionFilter } from '@/api/assistant';
 import { ErrorBanner } from '@/components/ErrorBanner';
+import { useSpeechInput } from '@/hooks/use-speech-input';
 import type { GuitarCollectionFilter } from '@/lib/filter-guitars';
 
 export type ChatMessage = {
@@ -15,6 +16,17 @@ type CollectionAssistantChatProps = {
   defaultOpen?: boolean;
 };
 
+const MicIcon = ({ active }: { active: boolean }) => (
+  <svg
+    aria-hidden="true"
+    className={`h-4 w-4 ${active ? 'text-red-600' : 'text-slate-700'}`}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-1.08A7 7 0 0 0 17 11Z" />
+  </svg>
+);
+
 export const CollectionAssistantChat = ({
   collectionUserId,
   onFilterChange,
@@ -26,32 +38,43 @@ export const CollectionAssistantChat = ({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
-  const send = async () => {
-    const message = input.trim();
-    if (!message || pending) return;
-    setInput('');
-    setError(null);
-    setMessages((prev) => [...prev, { role: 'user', text: message }]);
-    setPending(true);
-    try {
-      const res = await postAssistantChat({ collectionUserId, message });
-      setMessages((prev) => [...prev, { role: 'assistant', text: res.message }]);
-      onFilterChange(toCollectionFilter(res.filter));
-    } catch (err) {
-      setError(err);
-      if (err instanceof ApiError && err.status === 429) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'assistant',
-            text: 'Daily assistant limit reached. Try again tomorrow or browse the gallery manually.',
-          },
-        ]);
+  const send = useCallback(
+    async (rawMessage?: string) => {
+      const message = (rawMessage ?? input).trim();
+      if (!message || pending) return;
+      setInput('');
+      setError(null);
+      setMessages((prev) => [...prev, { role: 'user', text: message }]);
+      setPending(true);
+      try {
+        const res = await postAssistantChat({ collectionUserId, message });
+        setMessages((prev) => [...prev, { role: 'assistant', text: res.message }]);
+        onFilterChange(toCollectionFilter(res.filter));
+      } catch (err) {
+        setError(err);
+        if (err instanceof ApiError && err.status === 429) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              text: 'Daily assistant limit reached. Try again tomorrow or browse the gallery manually.',
+            },
+          ]);
+        }
+      } finally {
+        setPending(false);
       }
-    } finally {
-      setPending(false);
-    }
-  };
+    },
+    [collectionUserId, input, onFilterChange, pending],
+  );
+
+  const speech = useSpeechInput({
+    onInterimTranscript: setInput,
+    onFinalTranscript: (text) => {
+      setInput(text);
+      void send(text);
+    },
+  });
 
   const clearFilter = () => {
     onFilterChange(null);
@@ -93,7 +116,7 @@ export const CollectionAssistantChat = ({
       <div className="max-h-64 space-y-2 overflow-y-auto px-3 py-2 text-sm">
         {messages.length === 0 ? (
           <p className="text-slate-600">
-            Try &quot;Show Fenders under €1000&quot; or &quot;red guitars&quot;.
+            Type or use the microphone. Try &quot;Show Fenders under €1000&quot; or &quot;red guitars&quot;.
           </p>
         ) : null}
         {messages.map((msg, index) => (
@@ -106,6 +129,20 @@ export const CollectionAssistantChat = ({
         ))}
       </div>
 
+      {speech.listening ? (
+        <p className="px-3 pb-2 text-xs text-red-600" role="status">
+          Listening… speak your question
+        </p>
+      ) : null}
+
+      {speech.error ? (
+        <div className="px-3 pb-2">
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
+            {speech.error}
+          </p>
+        </div>
+      ) : null}
+
       {error && !(error instanceof ApiError && error.status === 429) ? (
         <div className="px-3 pb-2">
           <ErrorBanner error={error} title="Assistant unavailable" />
@@ -116,15 +153,34 @@ export const CollectionAssistantChat = ({
         className="flex gap-2 border-t border-slate-200 p-3"
         onSubmit={(e) => {
           e.preventDefault();
+          speech.stopListening();
           void send();
         }}
       >
+        {speech.supported ? (
+          <button
+            type="button"
+            className={`btn-secondary shrink-0 px-2.5 py-1.5 ${speech.listening ? 'ring-2 ring-red-300' : ''}`}
+            onClick={() => {
+              speech.clearError();
+              speech.toggleListening();
+            }}
+            disabled={pending}
+            aria-label={speech.listening ? 'Stop listening' : 'Ask with your voice'}
+            aria-pressed={speech.listening}
+          >
+            <MicIcon active={speech.listening} />
+          </button>
+        ) : null}
         <input
           type="text"
           className="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1.5 text-sm"
-          placeholder="Ask a question…"
+          placeholder={speech.supported ? 'Type or tap the mic…' : 'Ask a question…'}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            speech.clearError();
+            setInput(e.target.value);
+          }}
           disabled={pending}
           aria-label="Message to collection assistant"
         />
