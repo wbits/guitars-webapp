@@ -10,6 +10,8 @@ const assistantFilterSchema = z.object({
   maxPriceMajor: z.number().optional(),
   minYear: z.number().int().optional(),
   maxYear: z.number().int().optional(),
+  tag: z.string().optional(),
+  searchText: z.string().optional(),
 });
 
 export const assistantChatResponseSchema = z.object({

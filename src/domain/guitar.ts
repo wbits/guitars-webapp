@@ -26,6 +26,15 @@ const absoluteUrl = z
     message: 'Picture URLs must start with http(s)://',
   });
 
+const guitarAnalysisSchema = z.object({
+  status: z.enum(['pending', 'ready', 'failed']),
+  visualSummary: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  confidence: z.number().optional(),
+  failureReason: z.string().optional(),
+  analyzedAt: z.string().optional(),
+});
+
 export const guitarFieldsSchema = z.object({
   brand: trimmedNonEmpty('Brand'),
   typeName: trimmedNonEmpty('Type'),
@@ -77,6 +86,7 @@ export const guitarSchema = guitarFieldsSchema
   .extend({
     id: z.string().min(1),
     owner: z.string().min(1).optional(),
+    analysis: guitarAnalysisSchema.optional(),
   })
   .superRefine(refineCoverPicture);
 

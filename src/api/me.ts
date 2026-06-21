@@ -16,6 +16,7 @@ export const meSchema = z.object({
   assistantByokConfigured: z.boolean().optional().default(false),
   assistantLlmBaseUrl: z.string().optional(),
   assistantLlmModel: z.string().optional(),
+  photoAnalysisEnabled: z.boolean().optional().default(false),
 });
 
 export type CurrentUser = z.infer<typeof meSchema>;
@@ -25,7 +26,10 @@ export const getCurrentUser = async (signal?: AbortSignal): Promise<CurrentUser>
   return meSchema.parse(raw);
 };
 
-export const updateProfile = async (input: { username: string }): Promise<CurrentUser> => {
+export const updateProfile = async (input: {
+  username: string;
+  photoAnalysisEnabled?: boolean;
+}): Promise<CurrentUser> => {
   const raw = await apiFetch<unknown>({
     method: 'PATCH',
     path: '/me',
@@ -44,7 +48,7 @@ export const useCurrentUser = (options?: { enabled?: boolean }): UseQueryResult<
 export const useUpdateProfile = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { username: string }) => updateProfile(input),
+    mutationFn: (input: { username: string; photoAnalysisEnabled?: boolean }) => updateProfile(input),
     onSuccess: (updated) => {
       qc.setQueryData(['me'], updated);
       qc.invalidateQueries({ queryKey: ['collections'] });

@@ -37,4 +37,16 @@ describe('filterGuitars', () => {
     const out = filterGuitars(sample, { color: 'red' });
     expect(out.map((g) => g.id)).toEqual(['2']);
   });
+
+  it('filters by AI tag when analysis is ready', () => {
+    const withAnalysis: Guitar[] = [
+      {
+        ...sample[0],
+        analysis: { status: 'ready', tags: ['sunburst'], visualSummary: 'Sunburst finish' },
+      },
+      sample[1],
+    ];
+    const out = filterGuitars(withAnalysis, { tag: 'sunburst' });
+    expect(out.map((g) => g.id)).toEqual(['1']);
+  });
 });

@@ -234,6 +234,38 @@ export const GuitarView = () => {
         </div>
       </div>
 
+      {g.analysis ? (
+        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-700">AI-detected details</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Generated from photos. May be incomplete or inaccurate — your entered fields take precedence.
+          </p>
+          {g.analysis.status === 'ready' ? (
+            <div className="mt-3 space-y-3 text-sm text-slate-800">
+              {g.analysis.visualSummary ? <p>{g.analysis.visualSummary}</p> : null}
+              {g.analysis.tags && g.analysis.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {g.analysis.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : g.analysis.status === 'pending' ? (
+            <p className="mt-3 text-sm text-slate-600">Analysis in progress…</p>
+          ) : (
+            <p className="mt-3 text-sm text-amber-800">
+              Analysis failed{g.analysis.failureReason ? `: ${g.analysis.failureReason}` : '.'}
+            </p>
+          )}
+        </div>
+      ) : null}
+
       <div>
         <h2 className="mb-2 text-sm font-semibold text-slate-700">Pictures</h2>
         <PictureGallery pictures={g.pictures} />

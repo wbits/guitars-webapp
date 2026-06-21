@@ -9,6 +9,8 @@ export type GuitarCollectionFilter = {
   maxPriceMajor?: number;
   minYear?: number;
   maxYear?: number;
+  tag?: string;
+  searchText?: string;
 };
 
 const containsFold = (haystack: string | undefined, needle: string): boolean => {
@@ -21,6 +23,8 @@ export const filterGuitars = (guitars: Guitar[], filter: GuitarCollectionFilter)
     Boolean(filter.brand?.trim()) ||
     Boolean(filter.typeName?.trim()) ||
     Boolean(filter.color?.trim()) ||
+    Boolean(filter.tag?.trim()) ||
+    Boolean(filter.searchText?.trim()) ||
     filter.minPriceMajor !== undefined ||
     filter.maxPriceMajor !== undefined ||
     filter.minYear !== undefined ||
@@ -41,8 +45,35 @@ export const filterGuitars = (guitars: Guitar[], filter: GuitarCollectionFilter)
     if (filter.minPriceMajor !== undefined && priceMajor < filter.minPriceMajor) return false;
     if (filter.maxPriceMajor !== undefined && priceMajor > filter.maxPriceMajor) return false;
 
+    if (filter.tag && !tagMatches(guitar, filter.tag)) return false;
+    if (filter.searchText && !searchMatches(guitar, filter.searchText)) return false;
+
     return true;
   });
+};
+
+const tagMatches = (guitar: Guitar, tag: string): boolean => {
+  const needle = tag.trim().toLowerCase();
+  if (!needle) return true;
+  const analysis = guitar.analysis;
+  if (!analysis || analysis.status !== 'ready') return false;
+  const tags = analysis.tags ?? [];
+  if (tags.some((t) => t.toLowerCase().includes(needle))) return true;
+  return (analysis.visualSummary ?? '').toLowerCase().includes(needle);
+};
+
+const searchMatches = (guitar: Guitar, query: string): boolean => {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  let blob = [guitar.brand, guitar.typeName, guitar.color, guitar.description]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  const analysis = guitar.analysis;
+  if (analysis?.status === 'ready') {
+    blob += ` ${analysis.visualSummary ?? ''} ${(analysis.tags ?? []).join(' ')}`;
+  }
+  return blob.includes(needle);
 };
 
 export const filterToMatchingIds = (guitars: Guitar[], filter: GuitarCollectionFilter): string[] =>
