@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ApiError } from '@/api/client';
+import { useReanalyzeCollection } from '@/api/photo-analysis';
 import { useUpdateProfile, type CurrentUser } from '@/api/me';
 import { ErrorBanner } from '@/components/ErrorBanner';
 
@@ -9,8 +10,28 @@ type PhotoAnalysisSettingsProps = {
 
 export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
   const update = useUpdateProfile();
+  const reanalyze = useReanalyzeCollection();
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
   const enabled = me.photoAnalysisEnabled;
+
+  const onReanalyzeCollection = async () => {
+    setError(null);
+    setResult(null);
+    try {
+      const summary = await reanalyze.mutateAsync();
+      setResult(
+        `Re-analyzed ${summary.analyzed} of ${summary.total} guitars` +
+          (summary.skipped > 0 ? ` (${summary.skipped} skipped)` : '') +
+          (summary.failed > 0 ? ` (${summary.failed} failed)` : '') +
+          '.',
+      );
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message);
+      else if (err instanceof Error) setError(err.message);
+      else setError('Could not re-analyze collection');
+    }
+  };
 
   const onToggle = async () => {
     setError(null);
@@ -63,6 +84,25 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
           <ErrorBanner error={error} title="Photo analysis" />
         </div>
       ) : null}
+
+      <div className="mt-6 border-t border-slate-200 pt-4">
+        <h3 className="text-sm font-semibold text-slate-900">Re-analyze collection</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          Run photo analysis again for every guitar in your collection that has pictures. Useful after
+          changing models or refreshing AI metadata.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => void onReanalyzeCollection()}
+            disabled={reanalyze.isPending}
+          >
+            {reanalyze.isPending ? 'Re-analyzing…' : 'Re-analyze collection'}
+          </button>
+          {result ? <span className="text-sm text-green-700">{result}</span> : null}
+        </div>
+      </div>
     </section>
   );
 };
