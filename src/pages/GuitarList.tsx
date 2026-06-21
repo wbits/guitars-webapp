@@ -87,10 +87,9 @@ export const GuitarList = () => {
 
       {collectionUserId && (isLoading || sorted.length > 0) ? (
         <CollectionAssistantChat
+          key={collectionUserId}
           collectionUserId={collectionUserId}
           onFilterChange={setActiveFilter}
-          defaultOpen
-          loading={isLoading}
         />
       ) : null}
     </section>
