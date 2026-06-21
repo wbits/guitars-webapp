@@ -7,7 +7,7 @@ import {
 import { z } from 'zod';
 import { apiFetch } from './client';
 
-const meSchema = z.object({
+export const meSchema = z.object({
   userId: z.string(),
   username: z.string().optional(),
   email: z.string().optional(),
