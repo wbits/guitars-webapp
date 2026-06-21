@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,6 +21,8 @@ export interface GuitarFormProps {
   submitLabel?: string;
   /** Errors from the server, displayed underneath the form. */
   serverError?: string | null;
+  /** Fields pre-filled by AI in the add-from-photo flow. */
+  aiSuggestedFields?: (keyof GuitarInput)[];
 }
 
 /**
@@ -70,6 +72,27 @@ const toFormShape = (v: Partial<GuitarInput> | undefined): FormShape => ({
   description: v?.description ?? '',
 });
 
+const SuggestedBadge = () => (
+  <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800">
+    Suggested
+  </span>
+);
+
+const FieldLabel = ({
+  htmlFor,
+  children,
+  suggested,
+}: {
+  htmlFor: string;
+  children: ReactNode;
+  suggested?: boolean;
+}) => (
+  <label htmlFor={htmlFor} className="label">
+    {children}
+    {suggested ? <SuggestedBadge /> : null}
+  </label>
+);
+
 export const GuitarForm = ({
   initialValues,
   onSubmit,
@@ -77,7 +100,9 @@ export const GuitarForm = ({
   submitting,
   submitLabel = 'Save',
   serverError,
+  aiSuggestedFields,
 }: GuitarFormProps) => {
+  const suggested = new Set(aiSuggestedFields ?? []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadingCount, setUploadingCount] = useState(0);
@@ -151,9 +176,9 @@ export const GuitarForm = ({
     <form onSubmit={submit} className="space-y-5" noValidate>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="brand" className="label">
+          <FieldLabel htmlFor="brand" suggested={suggested.has('brand')}>
             Brand
-          </label>
+          </FieldLabel>
           <input
             id="brand"
             className="input"
@@ -164,9 +189,9 @@ export const GuitarForm = ({
         </div>
 
         <div>
-          <label htmlFor="typeName" className="label">
+          <FieldLabel htmlFor="typeName" suggested={suggested.has('typeName')}>
             Type
-          </label>
+          </FieldLabel>
           <input
             id="typeName"
             className="input"
@@ -177,9 +202,9 @@ export const GuitarForm = ({
         </div>
 
         <div>
-          <label htmlFor="buildYear" className="label">
+          <FieldLabel htmlFor="buildYear" suggested={suggested.has('buildYear')}>
             Build year
-          </label>
+          </FieldLabel>
           <input
             id="buildYear"
             type="number"
@@ -204,9 +229,9 @@ export const GuitarForm = ({
         </div>
 
         <div>
-          <label htmlFor="color" className="label">
+          <FieldLabel htmlFor="color" suggested={suggested.has('color')}>
             Color
-          </label>
+          </FieldLabel>
           <input id="color" className="input" aria-invalid={Boolean(errors.color)} {...register('color')} />
           <p className="help">Optional.</p>
         </div>
@@ -283,9 +308,9 @@ export const GuitarForm = ({
       </div>
 
       <div>
-        <label htmlFor="description" className="label">
+        <FieldLabel htmlFor="description" suggested={suggested.has('description')}>
           Description
-        </label>
+        </FieldLabel>
         <Controller
           control={control}
           name="description"
@@ -306,7 +331,10 @@ export const GuitarForm = ({
       </div>
 
       <fieldset>
-        <legend className="label">Pictures</legend>
+        <legend className="label">
+          Pictures
+          {suggested.has('pictures') ? <SuggestedBadge /> : null}
+        </legend>
         {fields.length === 0 ? (
           <p className="help">No pictures uploaded yet.</p>
         ) : (

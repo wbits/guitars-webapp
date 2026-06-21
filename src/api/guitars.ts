@@ -10,6 +10,7 @@ import {
   type Guitar,
   type GuitarInput,
 } from '@/domain/guitar';
+import type { AnalysisSeed } from './analyze-photo';
 import { apiFetch } from './client';
 
 const QUERY_KEYS = {
@@ -36,8 +37,15 @@ export const getGuitar = async (id: string, signal?: AbortSignal): Promise<Guita
   return guitarSchema.parse(raw);
 };
 
-export const createGuitar = async (input: GuitarInput): Promise<Guitar> => {
-  const raw = await apiFetch<unknown>({ method: 'POST', path: '/guitar', body: input });
+export const createGuitar = async (
+  input: GuitarInput,
+  options?: { seedAnalysis?: AnalysisSeed },
+): Promise<Guitar> => {
+  const raw = await apiFetch<unknown>({
+    method: 'POST',
+    path: '/guitar',
+    body: options?.seedAnalysis ? { ...input, seedAnalysis: options.seedAnalysis } : input,
+  });
   return guitarSchema.parse(raw);
 };
 
@@ -132,7 +140,8 @@ export const useSetGuitarCollectionVisibility = (id: string) => {
 export const useCreateGuitar = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: GuitarInput) => createGuitar(input),
+    mutationFn: (input: { values: GuitarInput; seedAnalysis?: AnalysisSeed }) =>
+      createGuitar(input.values, { seedAnalysis: input.seedAnalysis }),
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.all });
       qc.setQueryData(QUERY_KEYS.detail(created.id), created);

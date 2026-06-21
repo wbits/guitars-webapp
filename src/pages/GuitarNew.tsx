@@ -5,8 +5,9 @@ import { useCreateGuitar, analyzeGuitar } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
 import { ApiError } from '@/api/client';
 import { coverPictureKey } from '@/lib/guitar-cover-analysis';
+import { AddGuitarFromPhoto } from './AddGuitarFromPhoto';
 
-export const GuitarNew = () => {
+const ManualGuitarNew = () => {
   const navigate = useNavigate();
   const create = useCreateGuitar();
   const me = useCurrentUser();
@@ -16,9 +17,7 @@ export const GuitarNew = () => {
     <section className="space-y-4">
       <header>
         <h1 className="text-2xl font-semibold">Add guitar</h1>
-        <p className="text-sm text-slate-600">
-          Create a new guitar in the collection.
-        </p>
+        <p className="text-sm text-slate-600">Create a new guitar in the collection.</p>
       </header>
 
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -30,7 +29,7 @@ export const GuitarNew = () => {
           onSubmit={async (values) => {
             setServerError(null);
             try {
-              const created = await create.mutateAsync(values);
+              const created = await create.mutateAsync({ values });
               if (
                 me.data?.photoAnalysisEnabled &&
                 coverPictureKey(values) !== '\n'
@@ -52,4 +51,20 @@ export const GuitarNew = () => {
       </div>
     </section>
   );
+};
+
+export const GuitarNew = () => {
+  const me = useCurrentUser();
+  const photoFlowEnabled =
+    me.data?.photoAnalysisEnabled && !me.data?.assistantByokNeedsResave;
+
+  if (me.isLoading) {
+    return <p className="text-sm text-slate-600">Loading…</p>;
+  }
+
+  if (photoFlowEnabled) {
+    return <AddGuitarFromPhoto />;
+  }
+
+  return <ManualGuitarNew />;
 };
