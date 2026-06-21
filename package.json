@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "mcp:build": "npm run build --prefix mcp",
+    "mcp:test": "npm test --prefix mcp"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

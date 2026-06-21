@@ -1,15 +1,13 @@
 # Backlog — ideas and planned work
 
-## MCP server — Phase 1 (in progress planning)
+## MCP server — Phase 1
 
-Source plan: [`.agents/plans/mcp-server.md`](plans/mcp-server.md) (mirrored from `~/.cursor/plans/`).
-
-- [ ] Scaffold `mcp/` package (SDK, tsconfig, stdio entrypoint)
-- [ ] Node `api-client.ts` with env-based auth
-- [ ] Tools: `create_guitar`, `update_guitar`, `list_guitars`, `get_guitar`
-- [ ] Optional tool: `trigger_market_crawl` via `gh workflow run`
-- [ ] `mcp/README.md` + example Cursor MCP config
-- [ ] Vitest tests for config, API client, tool input mapping
+- [x] Scaffold `mcp/` package (SDK, tsconfig, stdio entrypoint)
+- [x] Node `api-client.ts` with env-based auth
+- [x] Tools: `create_guitar`, `update_guitar`, `list_guitars`, `get_guitar`
+- [x] Optional tool: `trigger_market_crawl` via `gh workflow run`
+- [x] `mcp/README.md` + example Cursor MCP config
+- [x] Vitest tests for config, API client, tool input mapping
 
 ## MCP server — Phase 2 (future, `wbits/guitars` repo)
 

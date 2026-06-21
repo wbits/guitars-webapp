@@ -26,7 +26,7 @@ guitars-webapp/
 ├── AGENTS.md                 ← pointer to .agents/
 ├── README.md                 ← minimal human entry + doc index
 ├── src/                      ← React app
-├── mcp/                      ← (planned) local MCP server
+├── mcp/                      ← local MCP server for AI agents
 ├── .agents/                  ← documentation & session memory
 ├── template.yaml             ← S3 + CloudFront SAM stack
 └── .github/workflows/deploy.yml

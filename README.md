@@ -20,4 +20,5 @@ Set `VITE_GUITARS_API_BASE_URL` in `.env.local`. See [`.agents/runbook.md`](.age
 | **Architecture** | [`.agents/architecture.md`](.agents/architecture.md) |
 | **API contract** | [`.agents/api-contract.md`](.agents/api-contract.md) |
 | **Dev & deploy** | [`.agents/runbook.md`](.agents/runbook.md) |
+| **MCP server** | [`mcp/README.md`](mcp/README.md) |
 | **Current status** | [`.agents/CONTEXT.md`](.agents/CONTEXT.md) |

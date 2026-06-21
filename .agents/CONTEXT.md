@@ -16,14 +16,13 @@ React + TypeScript SPA for managing a personal guitar collection at **guitars.co
 
 ## Recent focus
 
-- Agent documentation: `AGENTS.md` + `.agents/` structure
-- README slimmed down; detailed docs moved to `.agents/architecture.md`, `api-contract.md`, `runbook.md`
-- MCP server planned (Phase 1 local, Phase 2 hosted on API Gateway)
+- **MCP server Phase 1** implemented in `mcp/` — local stdio adapter with guitar CRUD tools + optional crawl trigger
+- Agent documentation in `.agents/` (architecture, API, runbook)
 
 ## Not started yet
 
-- `mcp/` package (see `.agents/plans/mcp-server.md`)
-- Phase 2 hosted MCP (backend repo)
+- Phase 2 hosted MCP on API Gateway (`wbits/guitars` repo)
+- Wire MCP into Cursor (build `mcp/` and configure `.cursor/mcp.json`)
 
 ## Quick verify
 
