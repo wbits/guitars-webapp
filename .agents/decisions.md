@@ -1,45 +1,22 @@
-# Decisions
+# Decisions — guitars-webapp
 
-Fixed choices — do not reverse lightly without discussion.
+## Scope
 
-## Architecture
-
-- **Frontend-only repo.** No Lambda, DynamoDB, or API Gateway code here.
-- **API contract** lives in `src/domain/` (zod). Backend implementation is in `wbits/guitars`.
-- **Prices** stored as integer minor units (cents) in API; UI uses major units via `src/lib/money.ts`.
-
-## Auth
-
-- Production: Cognito JWT as bearer token; collection scoped to token `sub`.
-- Local dev: optional static bearer token — never bake production tokens into the bundle.
-- Clients never send `owner` on POST/PUT; API assigns it.
+- **Frontend-only repo.** API, crawler, MCP → [`wbits/guitars`](https://github.com/wbits/guitars).
+- **API contract mirror** in `src/domain/` (zod). Server source of truth is Go domain.
 
 ## Webapp
 
-- Native `fetch` + thin `apiClient` — no axios.
-- TanStack Query for server state; react-hook-form + zod for forms.
-- Tailwind CSS, no UI kit.
-- Collection routes behind `<AuthGate>`.
+- Native `fetch`, TanStack Query, react-hook-form + zod, Tailwind.
+- Prices: minor units in API; major units in UI via `src/lib/money.ts`.
+- Cognito ID token for production auth.
 
-## MCP (AI agent access)
+## Agent docs
 
-- **REST ≠ MCP.** Existing `/guitar` routes stay for the webapp; MCP is an adapter layer.
-- **Phase 1:** local stdio MCP server in `mcp/` (this repo), calls REST API over HTTPS.
-- **Phase 2:** new `/mcp` route on existing API Gateway + Node Lambda (in `wbits/guitars`), same Cognito auth. End goal: any guitars.com user with an account.
-- Phase 1 tool handlers should be **transport-agnostic** so Phase 2 can reuse them.
-- Market crawl: no REST trigger today; optional MCP tool dispatches GitHub Actions `crawl.yml` in `wbits/guitars`.
-
-## Agent documentation
-
-- **`AGENTS.md`** at repo root points to **`.agents/`** for all agent context.
-- **`README.md`** is minimal (quick start + doc index); detailed docs live in `.agents/`.
-- **`architecture.md`** — system design, stack, routes, hosting.
-- **`api-contract.md`** — HTTP API reference.
-- **`runbook.md`** — dev, deploy, CI, troubleshooting.
-- Plans and configs mirrored from `~/.cursor/` under `.agents/plans/` and `.agents/config/`.
-- Session notes in `.agents/sessions/YYYY-MM-DD.md`.
+- This `.agents/` covers **React app only**.
+- API, MCP, infra docs live in **`guitars/.agents/`**.
 
 ## Git
 
-- Commits and deploy only on user request.
-- Do not commit `.env`, tokens, or secrets in example configs.
+- Commits/deploy on user request only.
+- No secrets in repo.

@@ -16,9 +16,7 @@ Set `VITE_GUITARS_API_BASE_URL` in `.env.local`. See [`.agents/runbook.md`](.age
 
 | Audience | Start here |
 |----------|------------|
-| **AI agents** | [`AGENTS.md`](AGENTS.md) → [`.agents/AGENTS.md`](.agents/AGENTS.md) |
-| **Architecture** | [`.agents/architecture.md`](.agents/architecture.md) |
-| **API contract** | [`.agents/api-contract.md`](.agents/api-contract.md) |
-| **Dev & deploy** | [`.agents/runbook.md`](.agents/runbook.md) |
-| **MCP server** | [`mcp/README.md`](mcp/README.md) |
+| **AI agents (API/MCP)** | [`wbits/guitars` AGENTS.md](https://github.com/wbits/guitars/blob/master/AGENTS.md) |
+| **Architecture (webapp)** | [`.agents/architecture.md`](.agents/architecture.md) |
+| **Dev & deploy (webapp)** | [`.agents/runbook.md`](.agents/runbook.md) |
 | **Current status** | [`.agents/CONTEXT.md`](.agents/CONTEXT.md) |

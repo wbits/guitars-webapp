@@ -2,32 +2,22 @@
 
 ## What this project is
 
-React + TypeScript SPA for managing a personal guitar collection at **guitars.com**. Thin UI over the GuitarCollection HTTP API (Go Lambda on AWS API Gateway + DynamoDB).
+React SPA for guitars.com — static site on S3 + CloudFront calling the GuitarCollection API.
 
-## Live & repos
+## Repos
 
 | | |
 |---|---|
-| **Site** | Static bundle on S3 + CloudFront |
-| **API** | [`wbits/guitars`](https://github.com/wbits/guitars) — separate repo |
-| **GitHub (this repo)** | `wbits/guitars-webapp` |
-| **Branch** | `master` |
-| **Documentation** | `.agents/` — architecture, API, runbook, plans, sessions |
+| **This repo** | `wbits/guitars-webapp` — UI only |
+| **API + MCP** | [`wbits/guitars`](https://github.com/wbits/guitars) |
 
 ## Recent focus
 
-- **MCP server Phase 1** implemented in `mcp/` — local stdio adapter with guitar CRUD tools + optional crawl trigger
-- Agent documentation in `.agents/` (architecture, API, runbook)
-
-## Not started yet
-
-- Phase 2 hosted MCP on API Gateway (`wbits/guitars` repo)
-- Wire MCP into Cursor (build `mcp/` and configure `.cursor/mcp.json`)
+- Agent docs split: frontend here, API/MCP/crawler in `guitars`
+- MCP server **moved** to `guitars/mcp/`
 
 ## Quick verify
 
 ```bash
 npm install && npm test && npm run dev
 ```
-
-Full setup: [runbook.md](runbook.md).
