@@ -11,11 +11,6 @@
 - Prices: minor units in API; major units in UI via `src/lib/money.ts`.
 - Cognito ID token for production auth.
 
-## Agent docs
-
-- This `.agents/` covers **React app only**.
-- API, MCP, infra docs live in **`guitars/.agents/`**.
-
 ## Git
 
 - Commits/deploy on user request only.

@@ -11,11 +11,6 @@ React SPA for guitars.com — static site on S3 + CloudFront calling the GuitarC
 | **This repo** | `wbits/guitars-webapp` — UI only |
 | **API + MCP** | [`wbits/guitars`](https://github.com/wbits/guitars) |
 
-## Recent focus
-
-- Agent docs split: frontend here, API/MCP/crawler in `guitars`
-- MCP server **moved** to `guitars/mcp/`
-
 ## Quick verify
 
 ```bash

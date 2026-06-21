@@ -37,13 +37,26 @@ Cognito ids from [`wbits/guitars`](https://github.com/wbits/guitars) stack outpu
 
 CI: `.github/workflows/deploy.yml` on push to `master`.
 
-Manual: set `VITE_*` env vars, then `make build deploy invalidate`. See previous full example in git history or [`guitars-webapp` deploy docs](https://github.com/wbits/guitars-webapp).
+Manual:
 
-GitHub vars: `GUITARS_API_BASE_URL`, `COGNITO_*`, `GUITARS_BUCKET`, `GUITARS_DISTRIBUTION_ID`, secret `AWS_DEPLOY_ROLE_ARN`.
+```sh
+export VITE_GUITARS_API_BASE_URL=https://your-api.example.com
+export VITE_COGNITO_REGION=eu-central-1
+export VITE_COGNITO_USER_POOL_ID=eu-central-1_XXXXX
+export VITE_COGNITO_CLIENT_ID=xxxxxxxx
+export BUCKET=my-guitars-webapp-bucket
+export DIST=E1ABCDEFGHIJKL
+
+make build
+make deploy
+make invalidate
+```
+
+GitHub: secret `AWS_DEPLOY_ROLE_ARN`; vars `GUITARS_API_BASE_URL`, `COGNITO_*`, `GUITARS_BUCKET`, `GUITARS_DISTRIBUTION_ID`.
 
 ## MCP
 
-The MCP server is **not in this repo**. See [`wbits/guitars/mcp`](https://github.com/wbits/guitars/tree/master/mcp).
+Not in this repo — [`wbits/guitars/mcp`](https://github.com/wbits/guitars/tree/master/mcp).
 
 ## Troubleshooting
 
