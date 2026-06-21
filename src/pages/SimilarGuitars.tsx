@@ -32,13 +32,10 @@ export const SimilarGuitars = () => {
   const query = isOwnCollection ? ownGuitars : userGuitars;
   const sorted = useMemo(() => sortGuitarsForCollection(query.data ?? []), [query.data]);
 
-  const visible = useMemo(() => {
-    let matches = filterGuitarsByTags(sorted, selectedTags);
-    if (fromGuitarId) {
-      matches = matches.filter((g) => g.id !== fromGuitarId);
-    }
-    return matches;
-  }, [fromGuitarId, selectedTags, sorted]);
+  const visible = useMemo(
+    () => filterGuitarsByTags(sorted, selectedTags),
+    [selectedTags, sorted],
+  );
 
   const owner = owners.data?.find((entry) => entry.userId === collectionUserId);
   const collectionLabel = isOwnCollection
@@ -118,7 +115,7 @@ export const SimilarGuitars = () => {
 
       {!query.isLoading && !query.isError && selectedTags.length > 0 && visible.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-300 bg-white p-6 text-center">
-          <p className="text-slate-700">No other guitars match the selected tags.</p>
+          <p className="text-slate-700">No guitars match the selected tags.</p>
         </div>
       ) : null}
 
