@@ -32,7 +32,11 @@ Fixed choices — do not reverse lightly without discussion.
 ## Agent documentation
 
 - **`AGENTS.md`** at repo root points to **`.agents/`** for all agent context.
-- Plans and configs that lived only in `~/.cursor/` should be mirrored under `.agents/`.
+- **`README.md`** is minimal (quick start + doc index); detailed docs live in `.agents/`.
+- **`architecture.md`** — system design, stack, routes, hosting.
+- **`api-contract.md`** — HTTP API reference.
+- **`runbook.md`** — dev, deploy, CI, troubleshooting.
+- Plans and configs mirrored from `~/.cursor/` under `.agents/plans/` and `.agents/config/`.
 - Session notes in `.agents/sessions/YYYY-MM-DD.md`.
 
 ## Git
