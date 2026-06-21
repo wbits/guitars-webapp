@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ApiError } from '@/api/client';
 import { useClearAssistantBYOK, useSaveAssistantBYOK } from '@/api/assistant-byok';
 import type { CurrentUser } from '@/api/me';
@@ -132,7 +133,10 @@ export const AssistantBYOKSettings = ({ me }: AssistantBYOKSettingsProps) => {
       </form>
 
       <p className="mt-3 text-xs text-slate-500">
-        Your key is encrypted on the server and never returned to the browser after save.
+        Your key is encrypted on the server and never returned to the browser after save.{' '}
+        <Link to="/help/assistant-api-key" className="font-medium text-slate-700 underline">
+          How to get a key &amp; how we protect it
+        </Link>
       </p>
     </section>
   );

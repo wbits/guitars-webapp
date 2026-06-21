@@ -15,6 +15,7 @@ import { GuitarEdit } from './pages/GuitarEdit';
 import { UserCollectionList } from './pages/UserCollectionList';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
+import { AssistantApiKeyHelp } from './pages/AssistantApiKeyHelp';
 
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
@@ -99,6 +100,7 @@ const router = createBrowserRouter([
         ),
       },
       { path: 'settings', element: <Settings /> },
+      { path: 'help/assistant-api-key', element: <AssistantApiKeyHelp /> },
       { path: 'login', element: lazyPage(Login) },
       { path: 'register', element: lazyPage(Register) },
       { path: '*', element: <Navigate to="/guitars" replace /> },
