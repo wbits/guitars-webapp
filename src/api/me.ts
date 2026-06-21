@@ -14,6 +14,7 @@ export const meSchema = z.object({
   displayName: z.string(),
   isAdmin: z.boolean().optional().default(false),
   assistantByokConfigured: z.boolean().optional().default(false),
+  assistantByokNeedsResave: z.boolean().optional().default(false),
   assistantLlmBaseUrl: z.string().optional(),
   assistantLlmModel: z.string().optional(),
   photoAnalysisEnabled: z.boolean().optional().default(false),

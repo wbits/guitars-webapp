@@ -33,6 +33,9 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
           (summary.failed > 0 ? ` (${summary.failed} failed)` : '') +
           '.',
       );
+      if (summary.failed > 0 && summary.firstError) {
+        setError(summary.firstError);
+      }
     } catch (err) {
       setProgress(null);
       if (err instanceof ApiError) setError(err.message);
@@ -55,13 +58,19 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
     }
   };
 
-  if (!me.assistantByokConfigured) {
+  if (!me.assistantByokConfigured && !me.assistantByokNeedsResave) {
     return null;
   }
 
   return (
     <section className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-base font-semibold text-slate-900">Photo analysis (AI metadata)</h2>
+      {me.assistantByokNeedsResave ? (
+        <p className="mt-2 text-sm text-amber-800">
+          Your saved assistant API key cannot be read by the server. Re-save it in assistant settings,
+          then try re-analyzing again.
+        </p>
+      ) : null}
       <p className="mt-1 text-sm text-slate-600">
         When enabled, new or updated guitar photos are analyzed with your API key to extract visual
         tags and a short summary. Results are stored and used for collection search. Your entered
@@ -104,7 +113,7 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
             type="button"
             className="btn-secondary"
             onClick={() => void onReanalyzeCollection()}
-            disabled={reanalyze.isPending}
+            disabled={reanalyze.isPending || me.assistantByokNeedsResave}
           >
             {reanalyze.isPending ? 'Re-analyzing…' : 'Re-analyze collection'}
           </button>
