@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GuitarForm } from '@/components/GuitarForm';
 import { useCreateGuitar, analyzeGuitar } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
+import { ApiError } from '@/api/client';
 import { coverPictureKey } from '@/lib/guitar-cover-analysis';
 
 export const GuitarNew = () => {

@@ -6,6 +6,7 @@ import { useCurrentUser } from '@/api/me';
 import { ApiError } from '@/api/client';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { guitarPath } from '@/lib/collection-routes';
+import { canEditGuitar } from '@/lib/guitar-ownership';
 import { coverPictureChanged } from '@/lib/guitar-cover-analysis';
 
 export const GuitarEdit = () => {
