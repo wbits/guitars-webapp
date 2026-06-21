@@ -7,6 +7,7 @@ import { ErrorBanner } from '@/components/ErrorBanner';
 import { GuitarMosaicGrid } from '@/components/GuitarMosaicGrid';
 import { formatCollectionHeading } from '@/lib/collection-routes';
 import { filterGuitars, type GuitarCollectionFilter } from '@/lib/filter-guitars';
+import { collectTagsFromGuitars } from '@/lib/guitar-tags';
 import { sortGuitarsForCollection } from '@/lib/guitar-collection';
 
 export const UserCollectionList = () => {
@@ -19,6 +20,7 @@ export const UserCollectionList = () => {
   const [activeFilter, setActiveFilter] = useState<GuitarCollectionFilter | null>(null);
 
   const sorted = useMemo(() => sortGuitarsForCollection(data ?? []), [data]);
+  const knownTags = useMemo(() => collectTagsFromGuitars(sorted), [sorted]);
   const visible = useMemo(
     () => (activeFilter ? filterGuitars(sorted, activeFilter) : sorted),
     [activeFilter, sorted],
@@ -84,7 +86,12 @@ export const UserCollectionList = () => {
       ) : null}
 
       {userId && (isLoading || sorted.length > 0) ? (
-        <CollectionAssistantChat key={userId} collectionUserId={userId} onFilterChange={setActiveFilter} />
+        <CollectionAssistantChat
+          key={userId}
+          collectionUserId={userId}
+          knownTags={knownTags}
+          onFilterChange={setActiveFilter}
+        />
       ) : null}
 
       {confirmClear ? (

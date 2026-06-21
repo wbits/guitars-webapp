@@ -17,6 +17,7 @@ import { formatCollectionLabel,
   guitarEditPath,
   guitarPath,
   myCollectionPath,
+  similarGuitarsPath,
   userCollectionPath,
 } from '@/lib/collection-routes';
 import { getGuitarNeighbors } from '@/lib/guitar-collection';
@@ -109,6 +110,16 @@ export const GuitarView = () => {
   const showFactory = hasDisplayValue(factory);
   const showAnalysisPanel = showGuitarAnalysisPanel(g, canEdit, me.data);
   const showAnalyzeButton = canTriggerGuitarAnalysis(g, canEdit, me.data);
+  const similarTags =
+    g.analysis?.status === 'ready' ? (g.analysis.tags ?? []).filter(Boolean) : [];
+  const similarPath =
+    similarTags.length > 0
+      ? similarGuitarsPath({
+          collectionUserId,
+          tags: similarTags,
+          fromGuitarId: g.id,
+        })
+      : null;
 
   const onAnalyze = async () => {
     setAnalyzeError(null);
@@ -296,6 +307,11 @@ export const GuitarView = () => {
                     </span>
                   ))}
                 </div>
+              ) : null}
+              {similarPath ? (
+                <Link to={similarPath} className="btn-secondary inline-flex px-2.5 py-1 text-xs">
+                  More like this…
+                </Link>
               ) : null}
             </div>
           ) : g.analysis?.status === 'pending' ? (

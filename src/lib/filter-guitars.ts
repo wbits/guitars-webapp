@@ -1,4 +1,5 @@
 import type { Guitar } from '@/domain/guitar';
+import { guitarHasAnyTag } from '@/lib/guitar-tags';
 
 /** Gallery filter spec (prices in major units, e.g. euros). */
 export type GuitarCollectionFilter = {
@@ -10,6 +11,7 @@ export type GuitarCollectionFilter = {
   minYear?: number;
   maxYear?: number;
   tag?: string;
+  tags?: string[];
   searchText?: string;
 };
 
@@ -24,6 +26,7 @@ export const filterGuitars = (guitars: Guitar[], filter: GuitarCollectionFilter)
     Boolean(filter.typeName?.trim()) ||
     Boolean(filter.color?.trim()) ||
     Boolean(filter.tag?.trim()) ||
+    Boolean(filter.tags?.some((t) => t.trim())) ||
     Boolean(filter.searchText?.trim()) ||
     filter.minPriceMajor !== undefined ||
     filter.maxPriceMajor !== undefined ||
@@ -46,6 +49,7 @@ export const filterGuitars = (guitars: Guitar[], filter: GuitarCollectionFilter)
     if (filter.maxPriceMajor !== undefined && priceMajor > filter.maxPriceMajor) return false;
 
     if (filter.tag && !tagMatches(guitar, filter.tag)) return false;
+    if (filter.tags && filter.tags.length > 0 && !guitarHasAnyTag(guitar, filter.tags)) return false;
     if (filter.searchText && !searchMatches(guitar, filter.searchText)) return false;
 
     return true;
@@ -58,7 +62,12 @@ const tagMatches = (guitar: Guitar, tag: string): boolean => {
   const analysis = guitar.analysis;
   if (!analysis || analysis.status !== 'ready') return false;
   const tags = analysis.tags ?? [];
-  if (tags.some((t) => t.toLowerCase().includes(needle))) return true;
+  if (tags.some((t) => {
+    const lower = t.toLowerCase();
+    return lower === needle || lower.includes(needle);
+  })) {
+    return true;
+  }
   return (analysis.visualSummary ?? '').toLowerCase().includes(needle);
 };
 

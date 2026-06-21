@@ -3,6 +3,7 @@ import { ApiError } from '@/api/client';
 import { postAssistantChat, toCollectionFilter } from '@/api/assistant';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { useSpeechInput } from '@/hooks/use-speech-input';
+import { matchTagFromInput } from '@/lib/guitar-tags';
 import type { GuitarCollectionFilter } from '@/lib/filter-guitars';
 
 export type ChatMessage = {
@@ -12,6 +13,7 @@ export type ChatMessage = {
 
 type CollectionAssistantChatProps = {
   collectionUserId: string;
+  knownTags: string[];
   onFilterChange: (filter: GuitarCollectionFilter | null) => void;
 };
 
@@ -28,6 +30,7 @@ const MicIcon = ({ active }: { active: boolean }) => (
 
 export const CollectionAssistantChat = ({
   collectionUserId,
+  knownTags,
   onFilterChange,
 }: CollectionAssistantChatProps) => {
   const [open, setOpen] = useState(false);
@@ -45,6 +48,19 @@ export const CollectionAssistantChat = ({
       setMessages((prev) => [...prev, { role: 'user', text: message }]);
       setPending(true);
       try {
+        const matchedTag = matchTagFromInput(message, knownTags);
+        if (matchedTag) {
+          onFilterChange({ tag: matchedTag });
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              text: `Showing guitars tagged “${matchedTag}”.`,
+            },
+          ]);
+          return;
+        }
+
         const res = await postAssistantChat({ collectionUserId, message });
         setMessages((prev) => [...prev, { role: 'assistant', text: res.message }]);
         onFilterChange(toCollectionFilter(res.filter));
@@ -63,7 +79,7 @@ export const CollectionAssistantChat = ({
         setPending(false);
       }
     },
-    [collectionUserId, input, onFilterChange, pending],
+    [collectionUserId, input, knownTags, onFilterChange, pending],
   );
 
   const speech = useSpeechInput({
@@ -114,7 +130,7 @@ export const CollectionAssistantChat = ({
       <div className="max-h-64 space-y-2 overflow-y-auto px-3 py-2 text-sm">
         {messages.length === 0 ? (
           <p className="text-slate-600">
-            Type or use the microphone. Try &quot;Show Fenders under €1000&quot; or &quot;red guitars&quot;.
+            Type or use the microphone. Try &quot;Show Fenders under €1000&quot;, &quot;red guitars&quot;, or an AI tag like &quot;sunburst&quot;.
           </p>
         ) : null}
         {messages.map((msg, index) => (

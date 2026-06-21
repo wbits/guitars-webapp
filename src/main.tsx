@@ -13,6 +13,7 @@ import { GuitarNew } from './pages/GuitarNew';
 import { GuitarView } from './pages/GuitarView';
 import { GuitarEdit } from './pages/GuitarEdit';
 import { UserCollectionList } from './pages/UserCollectionList';
+import { SimilarGuitars } from './pages/SimilarGuitars';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import { AssistantApiKeyHelp } from './pages/AssistantApiKeyHelp';
@@ -52,6 +53,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'guitars/similar',
+        element: (
+          <AuthGate>
+            <SimilarGuitars />
+          </AuthGate>
+        ),
+      },
+      {
         path: 'guitars/new',
         element: (
           <AuthGate>
@@ -72,6 +81,14 @@ const router = createBrowserRouter([
         element: (
           <AuthGate>
             <GuitarEdit />
+          </AuthGate>
+        ),
+      },
+      {
+        path: 'collections/:userId/similar',
+        element: (
+          <AuthGate>
+            <SimilarGuitars />
           </AuthGate>
         ),
       },

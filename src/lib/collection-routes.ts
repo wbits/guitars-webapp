@@ -39,3 +39,22 @@ export const formatCollectionHeading = (
   const label = displayName ?? formatCollectionLabel(userId);
   return `${label}'s collection`;
 };
+
+export const similarGuitarsPath = (options: {
+  collectionUserId?: string;
+  tags: string[];
+  fromGuitarId?: string;
+}): string => {
+  const params = new URLSearchParams();
+  if (options.tags.length > 0) {
+    params.set('tags', options.tags.join(','));
+  }
+  if (options.fromGuitarId) {
+    params.set('from', options.fromGuitarId);
+  }
+  const query = params.toString();
+  const base = options.collectionUserId
+    ? `${userCollectionPath(options.collectionUserId)}/similar`
+    : '/guitars/similar';
+  return query ? `${base}?${query}` : base;
+};
