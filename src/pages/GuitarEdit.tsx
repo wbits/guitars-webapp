@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GuitarForm } from '@/components/GuitarForm';
-import { useGuitar, useGuitars, useUpdateGuitar } from '@/api/guitars';
+import { useGuitar, useGuitars, useUpdateGuitar, analyzeGuitar } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
 import { ApiError } from '@/api/client';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { guitarPath } from '@/lib/collection-routes';
-import { canEditGuitar } from '@/lib/guitar-ownership';
+import { coverPictureChanged } from '@/lib/guitar-cover-analysis';
 
 export const GuitarEdit = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -62,6 +62,13 @@ export const GuitarEdit = () => {
             setServerError(null);
             try {
               const updated = await update.mutateAsync(values);
+              if (
+                me.data?.photoAnalysisEnabled &&
+                values.pictures.length > 0 &&
+                coverPictureChanged(g, values)
+              ) {
+                void analyzeGuitar(updated.id).catch(() => undefined);
+              }
               navigate(guitarPath(updated.id));
             } catch (err) {
               if (err instanceof ApiError) setServerError(err.message);

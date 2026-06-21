@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GuitarForm } from '@/components/GuitarForm';
-import { useCreateGuitar } from '@/api/guitars';
-import { ApiError } from '@/api/client';
+import { useCreateGuitar, analyzeGuitar } from '@/api/guitars';
+import { useCurrentUser } from '@/api/me';
+import { coverPictureKey } from '@/lib/guitar-cover-analysis';
 
 export const GuitarNew = () => {
   const navigate = useNavigate();
   const create = useCreateGuitar();
+  const me = useCurrentUser();
   const [serverError, setServerError] = useState<string | null>(null);
 
   return (
@@ -28,6 +30,12 @@ export const GuitarNew = () => {
             setServerError(null);
             try {
               const created = await create.mutateAsync(values);
+              if (
+                me.data?.photoAnalysisEnabled &&
+                coverPictureKey(values) !== '\n'
+              ) {
+                void analyzeGuitar(created.id).catch(() => undefined);
+              }
               navigate(`/guitars/${created.id}`);
             } catch (err) {
               if (err instanceof ApiError) {

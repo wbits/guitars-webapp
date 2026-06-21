@@ -46,6 +46,15 @@ export const deleteGuitar = async (id: string): Promise<void> => {
   await apiFetch<void>({ method: 'DELETE', path: `/guitar/${encodeURIComponent(id)}` });
 };
 
+export const analyzeGuitar = async (id: string, signal?: AbortSignal): Promise<Guitar> => {
+  const raw = await apiFetch<unknown>({
+    method: 'POST',
+    path: `/guitar/${encodeURIComponent(id)}/analyze`,
+    signal,
+  });
+  return guitarSchema.parse(raw);
+};
+
 export const useGuitars = (options?: { enabled?: boolean }): UseQueryResult<Guitar[]> =>
   useQuery({
     queryKey: QUERY_KEYS.list(),

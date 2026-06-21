@@ -1,30 +1,57 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import { apiFetch } from './client';
-import { guitarQueryKeys } from './guitars';
+import { analyzeGuitar, guitarQueryKeys, listGuitars } from './guitars';
 
-export const reanalyzeCollectionResultSchema = z.object({
-  total: z.number().int(),
-  analyzed: z.number().int(),
-  skipped: z.number().int(),
-  failed: z.number().int(),
-});
+export type ReanalyzeCollectionResult = {
+  total: number;
+  analyzed: number;
+  skipped: number;
+  failed: number;
+};
 
-export type ReanalyzeCollectionResult = z.infer<typeof reanalyzeCollectionResultSchema>;
+export type ReanalyzeProgress = {
+  current: number;
+  total: number;
+  guitarId: string;
+};
 
-export const reanalyzeCollection = async (signal?: AbortSignal): Promise<ReanalyzeCollectionResult> => {
-  const raw = await apiFetch<unknown>({
-    method: 'POST',
-    path: '/me/reanalyze-collection',
-    signal,
-  });
-  return reanalyzeCollectionResultSchema.parse(raw);
+export const reanalyzeCollection = async (
+  onProgress?: (progress: ReanalyzeProgress) => void,
+  signal?: AbortSignal,
+): Promise<ReanalyzeCollectionResult> => {
+  const guitars = await listGuitars(signal);
+  const targets = guitars.filter((guitar) => guitar.pictures.length > 0);
+  let analyzed = 0;
+  let failed = 0;
+
+  for (let i = 0; i < targets.length; i++) {
+    const guitar = targets[i];
+    onProgress?.({ current: i + 1, total: targets.length, guitarId: guitar.id });
+    try {
+      await analyzeGuitar(guitar.id, signal);
+      analyzed++;
+    } catch {
+      failed++;
+    }
+  }
+
+  return {
+    total: guitars.length,
+    analyzed,
+    skipped: guitars.length - targets.length,
+    failed,
+  };
 };
 
 export const useReanalyzeCollection = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => reanalyzeCollection(),
+    mutationFn: ({
+      onProgress,
+      signal,
+    }: {
+      onProgress?: (progress: ReanalyzeProgress) => void;
+      signal?: AbortSignal;
+    } = {}) => reanalyzeCollection(onProgress, signal),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: guitarQueryKeys.all });
     },

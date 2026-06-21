@@ -13,13 +13,20 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
   const reanalyze = useReanalyzeCollection();
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
   const enabled = me.photoAnalysisEnabled;
 
   const onReanalyzeCollection = async () => {
     setError(null);
     setResult(null);
+    setProgress(null);
     try {
-      const summary = await reanalyze.mutateAsync();
+      const summary = await reanalyze.mutateAsync({
+        onProgress: ({ current, total }) => {
+          setProgress(`Analyzing ${current} of ${total}…`);
+        },
+      });
+      setProgress(null);
       setResult(
         `Re-analyzed ${summary.analyzed} of ${summary.total} guitars` +
           (summary.skipped > 0 ? ` (${summary.skipped} skipped)` : '') +
@@ -27,6 +34,7 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
           '.',
       );
     } catch (err) {
+      setProgress(null);
       if (err instanceof ApiError) setError(err.message);
       else if (err instanceof Error) setError(err.message);
       else setError('Could not re-analyze collection');
@@ -100,6 +108,7 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
           >
             {reanalyze.isPending ? 'Re-analyzing…' : 'Re-analyze collection'}
           </button>
+          {progress ? <span className="text-sm text-slate-600">{progress}</span> : null}
           {result ? <span className="text-sm text-green-700">{result}</span> : null}
         </div>
       </div>
