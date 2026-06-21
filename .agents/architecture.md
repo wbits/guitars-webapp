@@ -40,7 +40,7 @@ Collection routes use `<AuthGate>`.
 
 On `/collections/:userId`, a chat panel calls `POST /assistant/chat` on the API. The API returns a filter spec + message; this app applies [`filterGuitars`](../src/lib/filter-guitars.ts) client-side to the already-loaded guitar list. No list-endpoint query params.
 
-Tier 2 (owner BYOK) is planned in both repos; not implemented.
+Tier 2 (owner BYOK) is implemented; see Profile page in webapp. Photo analysis BYOK still planned.
 
 ## Auth
 

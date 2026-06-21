@@ -4,7 +4,7 @@
 
 - [x] `filterGuitars` + gallery filter on collection page
 - [x] Collection assistant chat → `POST /assistant/chat`
-- [ ] Tier 2: owner BYOK settings UI (API not implemented yet)
+- [x] Tier 2: owner BYOK settings on Profile page
 - [ ] Curator chat on owner `/guitars` dashboard
 
 ## Webapp

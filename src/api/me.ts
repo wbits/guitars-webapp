@@ -13,6 +13,9 @@ const meSchema = z.object({
   email: z.string().optional(),
   displayName: z.string(),
   isAdmin: z.boolean().optional().default(false),
+  assistantByokConfigured: z.boolean().optional().default(false),
+  assistantLlmBaseUrl: z.string().optional(),
+  assistantLlmModel: z.string().optional(),
 });
 
 export type CurrentUser = z.infer<typeof meSchema>;

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/client';
 import { useCurrentUser, useUpdateProfile } from '@/api/me';
 import { ErrorBanner } from '@/components/ErrorBanner';
+import { AssistantBYOKSettings } from '@/components/AssistantBYOKSettings';
 import { isCognitoEnabled } from '@/lib/cognito-config';
 import { logout } from '@/lib/logout';
 
@@ -98,6 +99,8 @@ export const Profile = () => {
           </Link>
         </div>
       </form>
+
+      <AssistantBYOKSettings me={me.data} />
 
       {cognito ? (
         <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
