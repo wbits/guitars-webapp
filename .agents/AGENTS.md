@@ -20,6 +20,10 @@ Read this at the start of a session. This repo is the **React frontend** for gui
 
 After substantive changes, update `.agents/CONTEXT.md` briefly.
 
+## Commit push deploy (command)
+
+When the user says **`/cpd`**, **`cpd`**, or **`commit push deploy`**, follow [`.cursor/skills/cpd/SKILL.md`](../.cursor/skills/cpd/SKILL.md) (full workflow in [`../guitars/.cursor/skills/cpd/SKILL.md`](../../guitars/.cursor/skills/cpd/SKILL.md)). Load deploy vars from `../guitars/.agents/config/cpd.env`.
+
 ## Related repos
 
 | Repo | Role |

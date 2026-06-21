@@ -166,9 +166,12 @@ export const useDeleteGuitar = () => {
     mutationFn: (id: string) => deleteGuitar(id),
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.all });
-      const previousEntries = qc.getQueriesData<Guitar[]>({ queryKey: QUERY_KEYS.all });
+      const previousEntries = qc.getQueriesData<Guitar[]>({
+        queryKey: QUERY_KEYS.all,
+        predicate: (query) => query.queryKey[1] === 'list' && Array.isArray(query.state.data),
+      });
       for (const [key, previous] of previousEntries) {
-        if (previous) {
+        if (Array.isArray(previous)) {
           qc.setQueryData(
             key,
             previous.filter((g) => g.id !== id),
