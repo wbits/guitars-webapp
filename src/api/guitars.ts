@@ -62,12 +62,32 @@ export const useGuitars = (options?: { enabled?: boolean }): UseQueryResult<Guit
     enabled: options?.enabled ?? true,
   });
 
-export const useGuitar = (id: string | undefined): UseQueryResult<Guitar> =>
+export const useGuitar = (
+  id: string | undefined,
+  options?: { pollWhileAnalysisPending?: boolean },
+): UseQueryResult<Guitar> =>
   useQuery({
     queryKey: QUERY_KEYS.detail(id ?? ''),
     queryFn: ({ signal }) => getGuitar(id as string, signal),
     enabled: Boolean(id),
+    refetchInterval: (query) => {
+      if (!options?.pollWhileAnalysisPending) {
+        return false;
+      }
+      return query.state.data?.analysis?.status === 'pending' ? 5000 : false;
+    },
   });
+
+export const useAnalyzeGuitar = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => analyzeGuitar(id),
+    onSuccess: (updated) => {
+      qc.setQueryData(QUERY_KEYS.detail(id), updated);
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.list() });
+    },
+  });
+};
 
 export const useCreateGuitar = () => {
   const qc = useQueryClient();

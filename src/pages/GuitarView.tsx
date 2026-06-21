@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useCollectionOwners, useUserGuitars } from '@/api/collections';
-import { useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
+import { useAnalyzeGuitar, useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
+import { ApiError } from '@/api/client';
 import { useMarketLogs } from '@/api/marketLogs';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { ExpandableText } from '@/components/ExpandableText';
@@ -22,19 +23,25 @@ import { getGuitarNeighbors } from '@/lib/guitar-collection';
 import { hasDisplayValue } from '@/lib/guitar-display';
 import { canEditGuitar } from '@/lib/guitar-ownership';
 import { coverPictureUrl, formatGuitarCaption } from '@/lib/guitar-cover';
+import {
+  canTriggerGuitarAnalysis,
+  showGuitarAnalysisPanel,
+} from '@/lib/guitar-analysis-ui';
 
 export const GuitarView = () => {
   const { id = '', userId: collectionUserId } = useParams<{ id: string; userId?: string }>();
   const navigate = useNavigate();
-  const guitar = useGuitar(id);
+  const guitar = useGuitar(id, { pollWhileAnalysisPending: true });
   const myGuitars = useGuitars({ enabled: !collectionUserId });
   const userGuitars = useUserGuitars(collectionUserId, { enabled: Boolean(collectionUserId) });
   const owners = useCollectionOwners({ enabled: Boolean(collectionUserId) });
-  const me = useCurrentUser({ enabled: Boolean(collectionUserId) });
+  const me = useCurrentUser();
   const marketLogs = useMarketLogs(id);
   const del = useDeleteGuitar();
+  const analyze = useAnalyzeGuitar(id);
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<unknown>(null);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const isMobile = useMediaQuery('(max-width: 639px)');
 
   const collectionGuitars = collectionUserId ? (userGuitars.data ?? []) : (myGuitars.data ?? []);
@@ -100,6 +107,19 @@ export const GuitarView = () => {
   const showColor = hasDisplayValue(color);
   const showCountry = hasDisplayValue(country);
   const showFactory = hasDisplayValue(factory);
+  const showAnalysisPanel = showGuitarAnalysisPanel(g, canEdit, me.data);
+  const showAnalyzeButton = canTriggerGuitarAnalysis(g, canEdit, me.data);
+
+  const onAnalyze = async () => {
+    setAnalyzeError(null);
+    try {
+      await analyze.mutateAsync();
+    } catch (err) {
+      if (err instanceof ApiError) setAnalyzeError(err.message);
+      else if (err instanceof Error) setAnalyzeError(err.message);
+      else setAnalyzeError('Could not start photo analysis');
+    }
+  };
 
   const confirmDelete = async () => {
     setDeleteError(null);
@@ -234,13 +254,35 @@ export const GuitarView = () => {
         </div>
       </div>
 
-      {g.analysis ? (
+      {showAnalysisPanel ? (
         <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-700">AI-detected details</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Generated from photos. May be incomplete or inaccurate — your entered fields take precedence.
-          </p>
-          {g.analysis.status === 'ready' ? (
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-700">AI-detected details</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Generated from photos. May be incomplete or inaccurate — your entered fields take
+                precedence.
+              </p>
+            </div>
+            {showAnalyzeButton ? (
+              <button
+                type="button"
+                className="btn-secondary shrink-0 px-2.5 py-1 text-xs"
+                onClick={() => void onAnalyze()}
+                disabled={analyze.isPending}
+              >
+                {analyze.isPending
+                  ? 'Queueing…'
+                  : g.analysis?.status === 'failed'
+                    ? 'Retry analysis'
+                    : 'Analyze photo'}
+              </button>
+            ) : null}
+          </div>
+          {analyzeError ? (
+            <p className="mt-3 text-sm text-red-700">{analyzeError}</p>
+          ) : null}
+          {g.analysis?.status === 'ready' ? (
             <div className="mt-3 space-y-3 text-sm text-slate-800">
               {g.analysis.visualSummary ? <p>{g.analysis.visualSummary}</p> : null}
               {g.analysis.tags && g.analysis.tags.length > 0 ? (
@@ -256,12 +298,14 @@ export const GuitarView = () => {
                 </div>
               ) : null}
             </div>
-          ) : g.analysis.status === 'pending' ? (
+          ) : g.analysis?.status === 'pending' ? (
             <p className="mt-3 text-sm text-slate-600">Analysis in progress…</p>
-          ) : (
+          ) : g.analysis?.status === 'failed' ? (
             <p className="mt-3 text-sm text-amber-800">
               Analysis failed{g.analysis.failureReason ? `: ${g.analysis.failureReason}` : '.'}
             </p>
+          ) : (
+            <p className="mt-3 text-sm text-slate-600">Cover photo not analyzed yet.</p>
           )}
         </div>
       ) : null}
