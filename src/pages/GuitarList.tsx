@@ -10,7 +10,10 @@ import { collectTagsFromGuitars } from '@/lib/guitar-tags';
 import { sortGuitarsForCollection } from '@/lib/guitar-collection';
 
 export const GuitarList = () => {
-  const { data, isLoading, isError, error, refetch, isFetching } = useGuitars();
+  const [showHidden, setShowHidden] = useState(false);
+  const { data, isLoading, isError, error, refetch, isFetching } = useGuitars({
+    includeHidden: showHidden,
+  });
   const me = useCurrentUser();
   const [activeFilter, setActiveFilter] = useState<GuitarCollectionFilter | null>(null);
 
@@ -19,6 +22,10 @@ export const GuitarList = () => {
   const visible = useMemo(
     () => (activeFilter ? filterGuitars(sorted, activeFilter) : sorted),
     [activeFilter, sorted],
+  );
+  const hiddenCount = useMemo(
+    () => sorted.filter((guitar) => guitar.hiddenInCollection ?? false).length,
+    [sorted],
   );
   const collectionUserId = me.data?.userId;
 
@@ -32,11 +39,25 @@ export const GuitarList = () => {
             {activeFilter && sorted.length !== visible.length ? (
               <span className="text-slate-500"> (filtered from {sorted.length})</span>
             ) : null}
+            {showHidden && hiddenCount > 0 ? (
+              <span className="text-slate-500"> · {hiddenCount} hidden</span>
+            ) : null}
           </p>
         </div>
-        <Link to="/guitars/new" className="btn-primary w-full sm:w-auto">
-          Add guitar
-        </Link>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={showHidden}
+              onChange={(event) => setShowHidden(event.target.checked)}
+              className="rounded border-slate-300"
+            />
+            Show hidden
+          </label>
+          <Link to="/guitars/new" className="btn-primary w-full sm:w-auto">
+            Add guitar
+          </Link>
+        </div>
       </header>
 
       {isLoading ? <p className="text-sm text-slate-600">Loading guitars…</p> : null}
@@ -53,10 +74,20 @@ export const GuitarList = () => {
       {!isLoading && !isError && sorted.length === 0 ? (
         <div className="space-y-4">
           <div className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center">
-            <p className="text-slate-700">No guitars in your collection yet.</p>
-            <p className="mt-2 text-sm text-slate-500">
-              Get started by adding your first one.
+            <p className="text-slate-700">
+              {showHidden
+                ? 'No guitars in your collection yet.'
+                : 'No visible guitars in your collection.'}
             </p>
+            {!showHidden ? (
+              <p className="mt-2 text-sm text-slate-500">
+                Hidden guitars are omitted from this view. Turn on “Show hidden” to include them.
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">
+                Get started by adding your first one.
+              </p>
+            )}
             <Link to="/guitars/new" className="btn-primary mt-4 inline-flex">
               Add guitar
             </Link>
@@ -83,7 +114,10 @@ export const GuitarList = () => {
 
       {visible.length > 0 ? (
         <div className="-mx-4 overflow-hidden bg-white sm:mx-0 sm:rounded-md">
-          <GuitarMosaicGrid guitars={visible} />
+          <GuitarMosaicGrid
+            guitars={visible}
+            showHiddenBadge={showHidden}
+          />
         </div>
       ) : null}
 

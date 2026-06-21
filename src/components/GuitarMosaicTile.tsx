@@ -7,9 +7,14 @@ import { NoImagePlaceholder } from './NoImagePlaceholder';
 interface GuitarMosaicTileProps {
   guitar: Guitar;
   collectionUserId?: string;
+  showHiddenBadge?: boolean;
 }
 
-export const GuitarMosaicTile = ({ guitar, collectionUserId }: GuitarMosaicTileProps) => {
+export const GuitarMosaicTile = ({
+  guitar,
+  collectionUserId,
+  showHiddenBadge = false,
+}: GuitarMosaicTileProps) => {
   const imageUrl = coverPictureUrl(guitar);
   const caption = formatGuitarCaption(guitar);
 
@@ -30,6 +35,11 @@ export const GuitarMosaicTile = ({ guitar, collectionUserId }: GuitarMosaicTileP
       ) : (
         <NoImagePlaceholder />
       )}
+      {showHiddenBadge && (guitar.hiddenInCollection ?? false) ? (
+        <span className="absolute left-2 top-2 rounded bg-slate-900/75 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+          Hidden
+        </span>
+      ) : null}
     </Link>
   );
 };

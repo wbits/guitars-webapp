@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useCollectionOwners, useUserGuitars } from '@/api/collections';
-import { useAnalyzeGuitar, useDeleteGuitar, useGuitar, useGuitars } from '@/api/guitars';
+import { useAnalyzeGuitar, useDeleteGuitar, useGuitar, useGuitars, useSetGuitarCollectionVisibility } from '@/api/guitars';
 import { useCurrentUser } from '@/api/me';
 import { ApiError } from '@/api/client';
 import { useMarketLogs } from '@/api/marketLogs';
@@ -40,9 +40,11 @@ export const GuitarView = () => {
   const marketLogs = useMarketLogs(id);
   const del = useDeleteGuitar();
   const analyze = useAnalyzeGuitar(id);
+  const visibility = useSetGuitarCollectionVisibility(id);
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<unknown>(null);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
   const isMobile = useMediaQuery('(max-width: 639px)');
 
   const collectionGuitars = collectionUserId ? (userGuitars.data ?? []) : (myGuitars.data ?? []);
@@ -132,6 +134,17 @@ export const GuitarView = () => {
     }
   };
 
+  const onToggleVisibility = async () => {
+    setVisibilityError(null);
+    try {
+      await visibility.mutateAsync(!(g.hiddenInCollection ?? false));
+    } catch (err) {
+      if (err instanceof ApiError) setVisibilityError(err.message);
+      else if (err instanceof Error) setVisibilityError(err.message);
+      else setVisibilityError('Could not update collection visibility');
+    }
+  };
+
   const confirmDelete = async () => {
     setDeleteError(null);
     try {
@@ -198,9 +211,28 @@ export const GuitarView = () => {
                 Built {g.buildYear}
               </p>
             ) : null}
+            {canEdit && (g.hiddenInCollection ?? false) ? (
+              <p className={`mt-2 text-xs ${hasCover ? 'text-amber-100' : 'text-amber-800'}`}>
+                Hidden from your collection gallery.
+              </p>
+            ) : null}
           </div>
           {canEdit ? (
-            <div className="absolute bottom-3 right-3 z-20 flex flex-row gap-1.5 sm:relative sm:bottom-auto sm:right-auto sm:shrink-0 sm:gap-2">
+            <div className="absolute bottom-3 right-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-1.5 sm:relative sm:bottom-auto sm:right-auto sm:max-w-none sm:shrink-0 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => void onToggleVisibility()}
+                disabled={visibility.isPending}
+                className={`btn-secondary !min-h-8 px-2.5 py-1 text-xs sm:!min-h-11 sm:px-4 sm:py-2 sm:text-sm ${
+                  hasCover ? 'border-white/40 bg-white/85 hover:bg-white/95' : ''
+                }`}
+              >
+                {visibility.isPending
+                  ? 'Saving…'
+                  : (g.hiddenInCollection ?? false)
+                    ? 'Show in collection'
+                    : 'Hide from collection'}
+              </button>
               <Link
                 to={guitarEditPath(g.id)}
                 className={`btn-secondary !min-h-8 px-2.5 py-1 text-xs sm:!min-h-11 sm:px-4 sm:py-2 sm:text-sm ${
@@ -243,6 +275,9 @@ export const GuitarView = () => {
       ) : null}
 
       {deleteError ? <ErrorBanner error={deleteError} title="Could not delete guitar" /> : null}
+      {visibilityError ? (
+        <ErrorBanner error={visibilityError} title="Could not update collection visibility" />
+      ) : null}
 
       <div className="grid gap-6 md:grid-cols-2">
         <dl className="rounded-md border border-slate-200 bg-white p-5 text-sm shadow-sm">
