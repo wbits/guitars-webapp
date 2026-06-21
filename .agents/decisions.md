@@ -11,6 +11,14 @@
 - Prices: minor units in API; major units in UI via `src/lib/money.ts`.
 - Cognito ID token for production auth.
 
+## guitars-assistant (viewer)
+
+- **Chat starts closed** — only the “Ask about this collection” button until the user opens the panel; no `defaultOpen` on load.
+- **Voice input** — browser speech API (mic toggle) on the collection assistant; auto-send on final transcript when supported.
+- **Client-side filtering** — assistant response drives `filterGuitars` on the loaded collection; no API list filters in v1.
+
+Tiers, photo analysis, BYOK: see API repo [`.agents/decisions.md`](https://github.com/wbits/guitars/blob/master/.agents/decisions.md).
+
 ## Git
 
 - Commits/deploy on user request only.
