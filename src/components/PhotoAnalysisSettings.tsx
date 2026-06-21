@@ -22,20 +22,16 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
     setProgress(null);
     try {
       const summary = await reanalyze.mutateAsync({
-        onProgress: ({ current, total }) => {
-          setProgress(`Analyzing ${current} of ${total}…`);
+        onProgress: () => {
+          setProgress('Queueing collection for analysis…');
         },
       });
       setProgress(null);
       setResult(
-        `Re-analyzed ${summary.analyzed} of ${summary.total} guitars` +
+        `Queued ${summary.queued} of ${summary.total} guitars for analysis` +
           (summary.skipped > 0 ? ` (${summary.skipped} skipped)` : '') +
-          (summary.failed > 0 ? ` (${summary.failed} failed)` : '') +
-          '.',
+          '. Results will appear as each guitar finishes.',
       );
-      if (summary.failed > 0 && summary.firstError) {
-        setError(summary.firstError);
-      }
     } catch (err) {
       setProgress(null);
       if (err instanceof ApiError) setError(err.message);
@@ -105,8 +101,8 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
       <div className="mt-6 border-t border-slate-200 pt-4">
         <h3 className="text-sm font-semibold text-slate-900">Re-analyze collection</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Run photo analysis again for every guitar in your collection that has pictures. Useful after
-          changing models or refreshing AI metadata.
+          Run photo analysis again for every guitar in your collection that has a cover photo.
+          Jobs run in the background; refresh guitar pages to see results.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
@@ -115,7 +111,7 @@ export const PhotoAnalysisSettings = ({ me }: PhotoAnalysisSettingsProps) => {
             onClick={() => void onReanalyzeCollection()}
             disabled={reanalyze.isPending || me.assistantByokNeedsResave}
           >
-            {reanalyze.isPending ? 'Re-analyzing…' : 'Re-analyze collection'}
+            {reanalyze.isPending ? 'Queueing…' : 'Re-analyze collection'}
           </button>
           {progress ? <span className="text-sm text-slate-600">{progress}</span> : null}
           {result ? <span className="text-sm text-green-700">{result}</span> : null}
