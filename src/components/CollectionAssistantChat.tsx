@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ApiError } from '@/api/client';
 import { postAssistantChat, toCollectionFilter } from '@/api/assistant';
 import { ErrorBanner } from '@/components/ErrorBanner';
@@ -14,6 +14,8 @@ type CollectionAssistantChatProps = {
   collectionUserId: string;
   onFilterChange: (filter: GuitarCollectionFilter | null) => void;
   defaultOpen?: boolean;
+  /** When true, the panel stays collapsed until loading finishes. */
+  loading?: boolean;
 };
 
 const MicIcon = ({ active }: { active: boolean }) => (
@@ -31,8 +33,15 @@ export const CollectionAssistantChat = ({
   collectionUserId,
   onFilterChange,
   defaultOpen = false,
+  loading = false,
 }: CollectionAssistantChatProps) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!loading && defaultOpen) {
+      setOpen(true);
+    }
+  }, [defaultOpen, loading]);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pending, setPending] = useState(false);

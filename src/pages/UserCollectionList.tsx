@@ -83,11 +83,12 @@ export const UserCollectionList = () => {
         </div>
       ) : null}
 
-      {sorted.length > 0 ? (
+      {userId && (isLoading || sorted.length > 0) ? (
         <CollectionAssistantChat
           collectionUserId={userId}
           onFilterChange={setActiveFilter}
           defaultOpen
+          loading={isLoading}
         />
       ) : null}
 

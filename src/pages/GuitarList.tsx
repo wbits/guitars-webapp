@@ -85,11 +85,12 @@ export const GuitarList = () => {
         </div>
       ) : null}
 
-      {sorted.length > 0 && collectionUserId ? (
+      {collectionUserId && (isLoading || sorted.length > 0) ? (
         <CollectionAssistantChat
           collectionUserId={collectionUserId}
           onFilterChange={setActiveFilter}
           defaultOpen
+          loading={isLoading}
         />
       ) : null}
     </section>
