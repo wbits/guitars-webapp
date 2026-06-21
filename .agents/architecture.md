@@ -32,8 +32,15 @@ src/
 | `/guitars/:id/edit` | Edit |
 | `/login`, `/register` | Cognito auth |
 | `/settings` | Token / sign-out |
+| `/collections/:userId` | Public collection + viewer assistant chat |
 
 Collection routes use `<AuthGate>`.
+
+## guitars-assistant (viewer, tier 1)
+
+On `/collections/:userId`, a chat panel calls `POST /assistant/chat` on the API. The API returns a filter spec + message; this app applies [`filterGuitars`](../src/lib/filter-guitars.ts) client-side to the already-loaded guitar list. No list-endpoint query params.
+
+Tier 2 (owner BYOK) is planned in both repos; not implemented.
 
 ## Auth
 

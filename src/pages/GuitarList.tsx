@@ -1,14 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGuitars } from '@/api/guitars';
+import { useCurrentUser } from '@/api/me';
+import { CollectionAssistantChat } from '@/components/CollectionAssistantChat';
 import { ErrorBanner } from '@/components/ErrorBanner';
 import { GuitarMosaicGrid } from '@/components/GuitarMosaicGrid';
+import { filterGuitars, type GuitarCollectionFilter } from '@/lib/filter-guitars';
 import { sortGuitarsForCollection } from '@/lib/guitar-collection';
 
 export const GuitarList = () => {
   const { data, isLoading, isError, error, refetch, isFetching } = useGuitars();
+  const me = useCurrentUser();
+  const [activeFilter, setActiveFilter] = useState<GuitarCollectionFilter | null>(null);
 
   const sorted = useMemo(() => sortGuitarsForCollection(data ?? []), [data]);
+  const visible = useMemo(
+    () => (activeFilter ? filterGuitars(sorted, activeFilter) : sorted),
+    [activeFilter, sorted],
+  );
+  const collectionUserId = me.data?.userId;
 
   return (
     <section className="space-y-4">
@@ -16,7 +26,10 @@ export const GuitarList = () => {
         <div>
           <h1 className="text-2xl font-semibold">My Collection</h1>
           <p className="text-sm text-slate-600">
-            {isFetching ? 'Refreshing…' : `${sorted.length} guitar${sorted.length === 1 ? '' : 's'}`}
+            {isFetching ? 'Refreshing…' : `${visible.length} guitar${visible.length === 1 ? '' : 's'}`}
+            {activeFilter && sorted.length !== visible.length ? (
+              <span className="text-slate-500"> (filtered from {sorted.length})</span>
+            ) : null}
           </p>
         </div>
         <Link to="/guitars/new" className="btn-primary w-full sm:w-auto">
@@ -57,10 +70,27 @@ export const GuitarList = () => {
         </div>
       ) : null}
 
-      {sorted.length > 0 ? (
-        <div className="-mx-4 overflow-hidden bg-white sm:mx-0 sm:rounded-md">
-          <GuitarMosaicGrid guitars={sorted} />
+      {sorted.length > 0 && visible.length === 0 ? (
+        <div className="rounded-md border border-dashed border-slate-300 bg-white p-6 text-center">
+          <p className="text-slate-700">No guitars match the current filter.</p>
+          <button type="button" className="btn-secondary mt-3" onClick={() => setActiveFilter(null)}>
+            Show all
+          </button>
         </div>
+      ) : null}
+
+      {visible.length > 0 ? (
+        <div className="-mx-4 overflow-hidden bg-white sm:mx-0 sm:rounded-md">
+          <GuitarMosaicGrid guitars={visible} />
+        </div>
+      ) : null}
+
+      {sorted.length > 0 && collectionUserId ? (
+        <CollectionAssistantChat
+          collectionUserId={collectionUserId}
+          onFilterChange={setActiveFilter}
+          defaultOpen
+        />
       ) : null}
     </section>
   );
